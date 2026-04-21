@@ -25,5 +25,7 @@ Route::get('/test-add-stock', function () {
 
 Route::get('/stock', function () {
     return view('stock');
-    Route::get('/barang', [ConsumableController::class, 'index']);
 });
+
+Route::get('/barang', [ConsumableController::class, 'index']);
+Route::get('/barang/{id}', [ConsumableController::class, 'show']);

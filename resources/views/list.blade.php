@@ -16,9 +16,11 @@
 
     @foreach($data as $item)
     <tr>
-        <td>{{ $item->name }}</td>
-        <td>{{ $item->stock }}</td>
-        <td>{{ $item->unitMeasure->name }}</td>
+        <td>
+    <a href="/barang/{{ $item->id }}">
+        {{ $item->name }}
+    </a>
+</td>
     </tr>
     @endforeach
 

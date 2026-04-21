@@ -23,6 +23,7 @@ public function transactions()
 {
     return $this->hasMany(ConsumableTransaction::class);
 }
+
 }
 
 

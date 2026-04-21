@@ -39,11 +39,7 @@ class ConsumableService
 
     //function out (pakai barang)
     public function takeStock($consumableId, $qty, $note = null)
-{
-    if ($qty <= 0) {
-        throw new \Exception('Jumlah harus lebih dari 0');
-    }
-
+    {
     if (!$this->canTakeStock($consumableId, $qty)) {
         throw new \Exception('Stok tidak mencukupi');
     }

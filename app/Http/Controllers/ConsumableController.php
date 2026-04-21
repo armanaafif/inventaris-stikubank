@@ -80,4 +80,13 @@ class ConsumableController extends Controller
 
         return view('list', compact('data'));
     }
+
+    public function show($id)
+{
+    $item = \App\Models\Consumable::with('unitMeasure', 'transactions')->findOrFail($id);
+
+    $stock = $this->service->getStock($id);
+
+    return view('detail', compact('item', 'stock'));
+}
 }

@@ -6,12 +6,19 @@
     <title>Data Barang</title>
 </head>
 <body>
+
+    <form method="GET" action="/barang">
+    <input type="text" name="search" value="{{ request('search') }}">
+    <button type="submit">Cari</button>
+</form>
+
     <table border="1" cellpadding="10">
     <tr>
         <th>Nama</th>
         <th>Stok</th>
         <th>Satuan</th>
     </tr>
+    
 
     @foreach($data as $item)
     <tr>
@@ -36,5 +43,6 @@
     @endforeach
 
 </table>
+{{ $data->links() }}
 </body>
 </html>

@@ -31,3 +31,9 @@ Route::get('/barang', [ConsumableController::class, 'index']);
 Route::get('/barang/{id}', [ConsumableController::class, 'show']);
 Route::post('/add-stock', [ConsumableController::class, 'addStock']);
 Route::post('/take-stock', [ConsumableController::class, 'takeStock']);
+
+use App\Http\Controllers\Admin\StockRequestController;
+
+Route::get('/admin/requests', [StockRequestController::class, 'index']);
+Route::post('/admin/requests/{id}/approve', [StockRequestController::class, 'approve']);
+Route::post('/admin/requests/{id}/reject', [StockRequestController::class, 'reject']);

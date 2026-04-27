@@ -51,9 +51,7 @@ class ConsumableController extends Controller
             return redirect()->back()->with('success', 'Barang berhasil digunakan');
 
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage()
-            ], 400);
+           return redirect()->back()->with('error', $e->getMessage());
         }
     }
 
@@ -79,12 +77,20 @@ class ConsumableController extends Controller
         return view('list', compact('data'));
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
 {
-    $item = \App\Models\Consumable::with('unitMeasure', 'transactions')->findOrFail($id);
+    $item = \App\Models\Consumable::with('unitMeasure')->findOrFail($id);
+
+    $query = $item->transactions();
+
+    if ($request->type) {
+        $query->where('type', $request->type);
+    }
+
+    $transactions = $query->latest()->get();
 
     $stock = $this->service->getStock($id);
 
-    return view('detail', compact('item', 'stock'));
+    return view('detail', compact('item', 'stock', 'transactions'));
 }
 }

@@ -41,6 +41,16 @@
     <button type="submit" {{ $stock <= 0 ? 'disabled' : '' }}>
     Gunakan
 </button>
+
+<form method="GET">
+    <select name="type">
+        <option value="">Semua</option>
+        <option value="IN">Masuk</option>
+        <option value="OUT">Keluar</option>
+    </select>
+    <button type="submit">Filter</button>
+</form>
+
 </form>
 
 <h3>Histori Transaksi</h3>
@@ -53,7 +63,7 @@
         <th>Tanggal</th>
     </tr>
 
-    @foreach($item->transactions as $trx)
+    @foreach($transactions as $trx)
     <tr>
         <td>{{ $trx->type }}</td>
         <td>{{ $trx->quantity }}</td>

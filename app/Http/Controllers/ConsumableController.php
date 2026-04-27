@@ -29,9 +29,8 @@ class ConsumableController extends Controller
             $request->note
         );
 
-        return response()->json([
-            'message' => 'Stok berhasil ditambahkan'
-        ]);
+        return redirect()->back()->with('success', 'Stok berhasil ditambahkan');
+        
     }
 
     // 🔹 Pakai barang
@@ -49,9 +48,8 @@ class ConsumableController extends Controller
                 $request->note
             );
 
-            return response()->json([
-                'message' => 'Barang berhasil digunakan'
-            ]);
+            return redirect()->back()->with('success', 'Barang berhasil digunakan');
+
         } catch (\Exception $e) {
             return response()->json([
                 'message' => $e->getMessage()

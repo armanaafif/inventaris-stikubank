@@ -4,10 +4,44 @@
     <title>Detail Barang</title>
 </head>
 <body>
+@if($stock <= 0)
+    <p style="color:red">Stok habis!</p>
+@endif
+
+@if(session('success'))
+    <p style="color:green">{{ session('success') }}</p>
+@endif
+
+@if(session('error'))
+    <p style="color:red">{{ session('error') }}</p>
+@endif
 
 <h2>{{ $item->name }}</h2>
 
-<p>Stok: {{ $stock }} {{ $item->unitMeasure->name }}</p>
+<h3>
+    Stok Saat Ini: 
+    <strong>{{ $stock }} {{ $item->unitMeasure->name }}</strong>
+</h3>
+
+<h3>Tambah Stok</h3>
+<form method="POST" action="/add-stock">
+    @csrf
+    <input type="hidden" name="consumable_id" value="{{ $item->id }}">
+    <input type="number" name="quantity" placeholder="Jumlah"><br>
+    <input type="text" name="note" placeholder="Catatan"><br>
+    <button type="submit">Tambah</button>
+</form>
+
+<h3>Pakai Barang</h3>
+<form method="POST" action="/take-stock">
+    @csrf
+    <input type="hidden" name="consumable_id" value="{{ $item->id }}">
+    <input type="number" name="quantity" max="{{ $stock }}" placeholder="Jumlah">
+    <input type="text" name="note" placeholder="Catatan"><br>
+    <button type="submit" {{ $stock <= 0 ? 'disabled' : '' }}>
+    Gunakan
+</button>
+</form>
 
 <h3>Histori Transaksi</h3>
 

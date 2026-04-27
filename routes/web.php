@@ -29,3 +29,5 @@ Route::get('/stock', function () {
 
 Route::get('/barang', [ConsumableController::class, 'index']);
 Route::get('/barang/{id}', [ConsumableController::class, 'show']);
+Route::post('/add-stock', [ConsumableController::class, 'addStock']);
+Route::post('/take-stock', [ConsumableController::class, 'takeStock']);

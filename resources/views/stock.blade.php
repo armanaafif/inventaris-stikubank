@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Manajemen Stok</title>
+    @vite('resources/css/app.css')
 </head>
 <body>
 

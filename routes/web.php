@@ -1,39 +1,72 @@
 <?php
 
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ConsumableController;
+use App\Http\Controllers\Admin\StockRequestController;
 use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| PUBLIC
+|--------------------------------------------------------------------------
+*/
 
 Route::get('/', function () {
     return view('welcome');
 });
-use App\Http\Controllers\ConsumableController;
 
-Route::post('/add-stock', [ConsumableController::class, 'addStock']);
-Route::post('/take-stock', [ConsumableController::class, 'takeStock']);
-Route::get('/stock/{id}', [ConsumableController::class, 'getStock']);
+/*
+|--------------------------------------------------------------------------
+| DASHBOARD (AUTH)
+|--------------------------------------------------------------------------
+*/
 
-Route::get('/test-add-stock', function () {
-    return '
-        <form method="POST" action="/add-stock">
-            <input type="hidden" name="_token" value="' . csrf_token() . '">
-            <input type="number" name="consumable_id" placeholder="ID Barang"><br>
-            <input type="number" name="quantity" placeholder="Jumlah"><br>
-            <input type="text" name="note" placeholder="Catatan"><br>
-            <button type="submit">Submit</button>
-        </form>
-    ';
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
+
+/*
+|--------------------------------------------------------------------------
+| PROFILE (AUTH)
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::get('/stock', function () {
-    return view('stock');
-});
+/*
+|--------------------------------------------------------------------------
+| FITUR BARANG
+|--------------------------------------------------------------------------
+*/
 
 Route::get('/barang', [ConsumableController::class, 'index']);
 Route::get('/barang/{id}', [ConsumableController::class, 'show']);
+
 Route::post('/add-stock', [ConsumableController::class, 'addStock']);
 Route::post('/take-stock', [ConsumableController::class, 'takeStock']);
 
-use App\Http\Controllers\Admin\StockRequestController;
+/*
+|--------------------------------------------------------------------------
+| ADMIN (PROTECTED)
+|--------------------------------------------------------------------------
+*/
 
-Route::get('/admin/requests', [StockRequestController::class, 'index']);
-Route::post('/admin/requests/{id}/approve', [StockRequestController::class, 'approve']);
-Route::post('/admin/requests/{id}/reject', [StockRequestController::class, 'reject']);
+Route::middleware(['auth', 'admin'])->group(function () {
+
+    Route::get('/admin/requests', [StockRequestController::class, 'index']);
+    Route::post('/admin/requests/{id}/approve', [StockRequestController::class, 'approve']);
+    Route::post('/admin/requests/{id}/reject', [StockRequestController::class, 'reject']);
+
+});
+
+/*
+|--------------------------------------------------------------------------
+| AUTH (WAJIB DIBAWAH)
+|--------------------------------------------------------------------------
+*/
+
+require __DIR__.'/auth.php';

@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>Detail Barang</title>
+    @vite('resources/css/app.css')
 </head>
 <body>
 @if($stock <= 0)

@@ -9,87 +9,63 @@ use App\Models\StockRequest;
 
 class ConsumableController extends Controller
 {
-    /**
-     * Service untuk handle logika stok
-     */
     protected $service;
 
-    /**
-     * Inject service
-     */
     public function __construct(ConsumableService $service)
     {
         $this->service = $service;
     }
 
     /**
-     * ===============================
-     * STAFF: AJUKAN TAMBAH STOK (IN)
-     * ===============================
+     * Tambah stok langsung (tanpa approval)
      */
     public function addStock(Request $request)
     {
-        // 🔒 Hanya staff yang boleh request
-        if (auth()->user()->role !== 'staff') {
-            abort(403, 'Hanya staff yang boleh mengajukan request');
-        }
-
-        // ✅ Validasi input
         $request->validate([
-            'consumable_id' => 'required|integer',
+            'consumable_id' => 'required|exists:consumables,id',
             'quantity' => 'required|integer|min:1',
             'note' => 'nullable|string'
         ]);
 
-        // 📌 Simpan sebagai request (PENDING)
-        StockRequest::create([
-            'consumable_id' => $request->consumable_id,
-            'quantity' => $request->quantity,
-            'type' => 'IN',
-            'note' => $request->note,
-            'status' => 'pending',
-            'user_id' => auth()->id()
-        ]);
+        $this->service->addStock(
+            $request->consumable_id,
+            $request->quantity,
+            $request->note
+        );
 
         return redirect()->back()
-            ->with('success', 'Permintaan tambah stok dikirim, menunggu approval admin');
+            ->with('success', 'Stok berhasil ditambahkan');
     }
 
     /**
-     * ===============================
-     * STAFF: AJUKAN PENGGUNAAN (OUT)
-     * ===============================
+     * Gunakan barang (stok keluar)
      */
     public function takeStock(Request $request)
     {
-        // 🔒 Hanya staff
-        if (auth()->user()->role !== 'staff') {
-            abort(403, 'Hanya staff yang boleh mengajukan request');
-        }
-
         $request->validate([
-            'consumable_id' => 'required|integer',
+            'consumable_id' => 'required|exists:consumables,id',
             'quantity' => 'required|integer|min:1',
             'note' => 'nullable|string'
         ]);
 
-        StockRequest::create([
-            'consumable_id' => $request->consumable_id,
-            'quantity' => $request->quantity,
-            'type' => 'OUT',
-            'note' => $request->note,
-            'status' => 'pending',
-            'user_id' => auth()->id()
-        ]);
+        try {
+            $this->service->takeStock(
+                $request->consumable_id,
+                $request->quantity,
+                $request->note
+            );
 
-        return redirect()->back()
-            ->with('success', 'Permintaan penggunaan dikirim, menunggu approval admin');
+            return redirect()->back()
+                ->with('success', 'Barang berhasil digunakan');
+
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', $e->getMessage());
+        }
     }
 
     /**
-     * ===============================
-     * API: AMBIL TOTAL STOK
-     * ===============================
+     * API untuk mengambil stok
      */
     public function getStock($id)
     {
@@ -101,23 +77,18 @@ class ConsumableController extends Controller
     }
 
     /**
-     * ===============================
-     * LIST BARANG + SEARCH + PAGINATION
-     * ===============================
+     * Menampilkan daftar barang
      */
     public function index(Request $request)
     {
         $query = Consumable::with('unitMeasure');
 
-        // 🔍 Search berdasarkan nama
         if ($request->search) {
             $query->where('name', 'like', '%' . $request->search . '%');
         }
 
-        // 📄 Pagination + keep query string
         $data = $query->paginate(10)->withQueryString();
 
-        // 🔢 Inject stock (derived data)
         foreach ($data as $item) {
             $item->stock = $this->service->getStock($item->id);
         }
@@ -126,15 +97,12 @@ class ConsumableController extends Controller
     }
 
     /**
-     * ===============================
-     * DETAIL BARANG + HISTORY TRANSAKSI
-     * ===============================
+     * Detail barang dan histori transaksi
      */
     public function show(Request $request, $id)
     {
         $item = Consumable::with('unitMeasure')->findOrFail($id);
 
-        // 🔎 Filter transaksi
         $query = $item->transactions();
 
         if ($request->type) {
@@ -143,7 +111,6 @@ class ConsumableController extends Controller
 
         $transactions = $query->latest()->get();
 
-        // 🔢 Hitung stok
         $stock = $this->service->getStock($id);
 
         return view('detail', compact('item', 'stock', 'transactions'));

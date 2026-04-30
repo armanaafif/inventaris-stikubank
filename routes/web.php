@@ -1,5 +1,9 @@
 <?php
 
+Route::get('/barang/{id}', function ($id) {
+    return "TEST ID: " . $id;
+});
+
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ConsumableController;
 use App\Http\Controllers\Admin\StockRequestController;
@@ -65,7 +69,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| AUTH (WAJIB DIBAWAH)
+| Auth wajib
 |--------------------------------------------------------------------------
 */
 

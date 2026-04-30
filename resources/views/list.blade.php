@@ -1,49 +1,51 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Barang</title>
-    @vite('resources/css/app.css')
-</head>
-<body>
+@extends('layouts.app')
 
-    <form method="GET" action="/barang">
-    <input type="text" name="search" value="{{ request('search') }}">
-    <button type="submit">Cari</button>
-</form>
+@section('content')
+<div class="p-6">
 
-    <table border="1" cellpadding="10">
-    <tr>
-        <th>Nama</th>
-        <th>Stok</th>
-        <th>Satuan</th>
-    </tr>
-    
+    <h1 class="text-2xl font-bold mb-6">Daftar Barang</h1>
 
-    @foreach($data as $item)
-    <tr>
-        <td>
-            <a href="/barang/{{ $item->id }}">
-                {{ $item->name }}
-            </a>
-        </td>
+    <div class="bg-white rounded-xl shadow overflow-hidden">
 
-        <td style="color: {{ ($item->stock ?? 0) < 10 ? 'red' : 'black' }}">
-    {{ $item->stock ?? 0 }}
+        <table class="w-full text-sm">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="p-3 text-left">Nama</th>
+                    <th class="p-3 text-left">Stok</th>
+                    <th class="p-3 text-left">Satuan</th>
+                    <th class="p-3 text-center">Aksi</th>
+                </tr>
+            </thead>
 
-    @if(($item->stock ?? 0) < 10)
-        <span style="color:red">(Low)</span>
-    @endif
-</td>
+            <tbody>
+                @forelse($data as $item)
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="p-3 font-medium">{{ $item->name }}</td>
+                    <td class="p-3">{{ $item->stock }}</td>
+                    <td class="p-3">{{ $item->unitMeasure->name ?? '-' }}</td>
+                    <td class="p-3 text-center">
+                        <a href="/barang/{{ $item->id }}"
+                           class="bg-blue-500 text-white px-3 py-1 rounded text-xs">
+                           Detail
+                        </a>
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="4" class="text-center p-6 text-gray-500">
+                        Tidak ada data
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
 
-        <td>
-            {{ $item->unitMeasure->name ?? '-' }}
-        </td>
-    </tr>
-    @endforeach
+        </table>
 
-</table>
-{{ $data->links() }}
-</body>
-</html>
+    </div>
+
+    <div class="mt-4">
+        {{ $data->links() }}
+    </div>
+
+</div>
+@endsection

@@ -1,6 +1,12 @@
 @extends('layouts.app')
 
 @section('content')
+<form method="POST" action="/logout">
+    @csrf
+    <button type="submit" style="background:red;color:white;padding:8px 12px;border:none;">
+        Logout
+    </button>
+</form>
 <div class="p-6">
 
     <h1 class="text-2xl font-bold mb-6">Dashboard Inventaris</h1>

@@ -7,12 +7,23 @@ use App\Models\StockRequest;
 use App\Services\ConsumableService;
 use Illuminate\Http\Request;
 
+/**
+ * Class StockRequestController
+ * 
+ * Controller untuk mengelola permintaan stok (Stock Request).
+ * Menangani proses approval, rejection, dan menampilkan daftar permintaan.
+ */
 class StockRequestController extends Controller
 {
+    /**
+     * @var ConsumableService
+     */
     protected $service;
 
     /**
-     * Inject service untuk manipulasi stok
+     * Constructor - Menginjeksi service untuk manipulasi stok
+     * 
+     * @param ConsumableService $service
      */
     public function __construct(ConsumableService $service)
     {
@@ -21,31 +32,35 @@ class StockRequestController extends Controller
 
     /**
      * Menampilkan daftar request dengan filter, search, dan statistik
+     * 
+     * @param Request $request
+     * @return \Illuminate\View\View
      */
     public function index(Request $request)
     {
+        // Query dasar dengan relasi yang diperlukan
         $query = StockRequest::with(['consumable.unitMeasure', 'user']);
 
         // Filter berdasarkan tipe (IN / OUT)
-        if ($request->type) {
+        if ($request->filled('type')) {
             $query->where('type', $request->type);
         }
 
-        // Search berdasarkan nama barang
-        if ($request->search) {
+        // Search berdasarkan nama barang (consumable name)
+        if ($request->filled('search')) {
             $query->whereHas('consumable', function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%');
             });
         }
 
-        // Ambil hanya status pending
+        // Ambil hanya status pending, diurutkan terbaru
         $requests = $query
             ->where('status', 'pending')
             ->latest()
             ->get();
 
-        // Statistik
-        $totalPending  = StockRequest::where('status', 'pending')->count();
+        // Statistik untuk tampilan
+        $totalPending = StockRequest::where('status', 'pending')->count();
         $totalApproved = StockRequest::where('status', 'approved')->count();
         $totalRejected = StockRequest::where('status', 'rejected')->count();
 
@@ -59,35 +74,38 @@ class StockRequestController extends Controller
 
     /**
      * Approve request dan eksekusi perubahan stok
+     * - Untuk tipe IN: menambah stok
+     * - Untuk tipe OUT: mengurangi stok (dengan validasi stok mencukupi)
+     * 
+     * @param int $id
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function approve($id)
     {
+        // Cari request atau gagal (404)
         $req = StockRequest::findOrFail($id);
 
-        // Cegah request diproses ulang
+        // Cegah request yang sudah diproses diproses ulang
         if ($req->status !== 'pending') {
             return back()->with('error', 'Request sudah diproses');
         }
 
-        // Validasi stok jika OUT
+        // Validasi stok untuk tipe OUT
         if ($req->type === 'OUT') {
             $currentStock = $this->service->getStock($req->consumable_id);
-
             if ($currentStock < $req->quantity) {
                 return back()->with('error', 'Stok tidak mencukupi');
             }
         }
 
-        // Eksekusi perubahan stok
+        // Eksekusi perubahan stok berdasarkan tipe
         if ($req->type === 'IN') {
             $this->service->addStock(
                 $req->consumable_id,
                 $req->quantity,
                 $req->note
             );
-        }
-
-        if ($req->type === 'OUT') {
+        } elseif ($req->type === 'OUT') {
             $this->service->takeStock(
                 $req->consumable_id,
                 $req->quantity,
@@ -95,7 +113,7 @@ class StockRequestController extends Controller
             );
         }
 
-        // Update status
+        // Update status request menjadi approved
         $req->status = 'approved';
         $req->save();
 
@@ -104,15 +122,21 @@ class StockRequestController extends Controller
 
     /**
      * Reject request tanpa perubahan stok
+     * 
+     * @param int $id
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function reject($id)
     {
+        // Cari request atau gagal (404)
         $req = StockRequest::findOrFail($id);
 
+        // Cegah request yang sudah diproses
         if ($req->status !== 'pending') {
             return back()->with('error', 'Request sudah diproses');
         }
 
+        // Update status menjadi rejected
         $req->status = 'rejected';
         $req->save();
 

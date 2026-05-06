@@ -28,13 +28,13 @@ class AuthenticatedSessionController extends Controller
 
     $request->session()->regenerate();
 
-    $user = Auth::user(); // pakai facade, bukan helper
+    $user = Auth::user(); // pakai facade
 
     if ($user->role === 'admin') {
-        return redirect('/admin/requests');
+        return redirect('/dashboard');
     }
 
-    return redirect('/barang');
+    return redirect('/dashboard');
 }
 
     /**

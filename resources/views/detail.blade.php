@@ -1,5 +1,9 @@
 @extends('layouts.app')
 
+<a href="/barang" class="text-blue-500 mb-4 inline-block">
+    ← Kembali ke daftar barang
+</a>
+
 @section('content')
 <div class="p-6 max-w-4xl mx-auto">
 

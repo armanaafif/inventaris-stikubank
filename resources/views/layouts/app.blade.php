@@ -1,23 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventaris</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite('resources/css/app.css')
 </head>
-
 <body class="bg-gray-100">
 
     <!-- NAVBAR -->
-    <div class="bg-white shadow px-6 py-4 flex justify-between">
-        <h1 class="font-bold text-lg">Inventaris</h1>
-
+    <nav class="bg-white shadow p-4 flex justify-between">
         <div class="flex gap-4">
-            <a href="/barang" class="text-sm hover:text-blue-500">Barang</a>
-            <a href="/admin/requests" class="text-sm hover:text-blue-500">Request</a>
+            <a href="/dashboard" class="font-bold">Dashboard</a>
+            <a href="/barang">Barang</a>
+            <a href="/admin/requests">Request</a>
         </div>
-    </div>
+
+        <form method="POST" action="/logout">
+            @csrf
+            <button class="bg-red-500 text-white px-3 py-1 rounded">
+                Logout
+            </button>
+        </form>
+    </nav>
 
     <!-- CONTENT -->
     <div class="p-6">

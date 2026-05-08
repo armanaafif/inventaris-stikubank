@@ -50,7 +50,10 @@ Route::get('/dashboard', function () {
 */
 
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+
+    Route::get('/profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
+
 });
 
 /*
@@ -59,10 +62,48 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 
+/*
+|--------------------------------------------------------------------------
+| Halaman daftar barang
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/barang', [ConsumableController::class, 'index']);
+
+/*
+|--------------------------------------------------------------------------
+| Halaman tambah barang
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/barang/create', [ConsumableController::class, 'create']);
+
+Route::post('/barang/store', [ConsumableController::class, 'store']);
+
+/*
+|--------------------------------------------------------------------------
+| Detail barang
+|--------------------------------------------------------------------------
+*/
+
 Route::get('/barang/{id}', [ConsumableController::class, 'show']);
 
+/*
+|--------------------------------------------------------------------------
+| Monitoring stok
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/stock', [ConsumableController::class, 'stock']);
+
+/*
+|--------------------------------------------------------------------------
+| Manipulasi stok
+|--------------------------------------------------------------------------
+*/
+
 Route::post('/add-stock', [ConsumableController::class, 'addStock']);
+
 Route::post('/take-stock', [ConsumableController::class, 'takeStock']);
 
 /*
@@ -72,9 +113,13 @@ Route::post('/take-stock', [ConsumableController::class, 'takeStock']);
 */
 
 Route::middleware(['auth', 'admin'])->group(function () {
+
     Route::get('/admin/requests', [StockRequestController::class, 'index']);
+
     Route::post('/admin/requests/{id}/approve', [StockRequestController::class, 'approve']);
+
     Route::post('/admin/requests/{id}/reject', [StockRequestController::class, 'reject']);
+
 });
 
 /*

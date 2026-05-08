@@ -1,154 +1,366 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Admin Requests</title>
-    @vite('resources/css/app.css')
-</head>
+@extends('layouts.app')
 
-<body class="bg-gray-100 min-h-screen">
+@section('content')
 
-    <!-- HEADER -->
-    <div class="bg-white shadow p-4 flex justify-between items-center">
-        <h1 class="text-xl font-bold">Stock Request Management</h1>
-        <span class="text-sm text-gray-500">Admin Panel</span>
-    </div>
+<div class="max-w-7xl mx-auto">
 
-    <!-- CONTENT -->
-    <div class="p-6">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 mb-8">
 
-        <!-- 🔥 STATS -->
-        <div class="grid grid-cols-3 gap-4 mb-6">
+        <div>
 
-            <div class="bg-yellow-100 p-4 rounded">
-                <h3 class="text-sm text-gray-600">Pending</h3>
-                <p class="text-2xl font-bold">{{ $totalPending }}</p>
-            </div>
+            <h1 class="text-3xl font-bold text-gray-800">
+                Approval Request
+            </h1>
 
-            <div class="bg-green-100 p-4 rounded">
-                <h3 class="text-sm text-gray-600">Approved</h3>
-                <p class="text-2xl font-bold">{{ $totalApproved }}</p>
-            </div>
-
-            <div class="bg-red-100 p-4 rounded">
-                <h3 class="text-sm text-gray-600">Rejected</h3>
-                <p class="text-2xl font-bold">{{ $totalRejected }}</p>
-            </div>
+            <p class="text-gray-500 mt-2">
+                Kelola approval barang masuk dan keluar
+            </p>
 
         </div>
 
-        <!-- CARD -->
-        <div class="bg-white rounded-xl shadow p-5">
+        <!-- Navigasi -->
+        <div class="flex flex-wrap gap-3">
 
-            <h2 class="text-lg font-semibold mb-4">Pending Requests</h2>
+            <a
+                href="/dashboard"
+                class="inline-flex items-center justify-center bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 font-medium px-5 py-3 rounded-xl transition"
+            >
+                Dashboard
+            </a>
 
-            <!-- 🔍 FILTER -->
-            <form method="GET" class="flex gap-3 mb-4">
+            <a
+                href="/barang"
+                class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-3 rounded-xl transition"
+            >
+                Kelola Barang
+            </a>
 
-                <input 
-                    type="text" 
-                    name="search" 
-                    placeholder="Cari barang..."
-                    class="border px-3 py-2 rounded w-1/3"
+        </div>
+
+    </div>
+
+    <!-- Statistik -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+
+        <!-- Pending -->
+        <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+
+            <div class="flex items-start justify-between">
+
+                <div>
+
+                    <p class="text-sm font-medium text-gray-500">
+                        Pending
+                    </p>
+
+                    <h2 class="text-4xl font-bold text-gray-800 mt-3">
+                        {{ $totalPending }}
+                    </h2>
+
+                </div>
+
+                <div class="bg-yellow-100 text-yellow-700 p-4 rounded-2xl text-xl">
+                    ⏳
+                </div>
+
+            </div>
+
+            <p class="text-sm text-gray-400 mt-5">
+                Menunggu approval admin
+            </p>
+
+        </div>
+
+        <!-- Approved -->
+        <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+
+            <div class="flex items-start justify-between">
+
+                <div>
+
+                    <p class="text-sm font-medium text-gray-500">
+                        Approved
+                    </p>
+
+                    <h2 class="text-4xl font-bold text-gray-800 mt-3">
+                        {{ $totalApproved }}
+                    </h2>
+
+                </div>
+
+                <div class="bg-green-100 text-green-700 p-4 rounded-2xl text-xl">
+                    ✔
+                </div>
+
+            </div>
+
+            <p class="text-sm text-gray-400 mt-5">
+                Request berhasil disetujui
+            </p>
+
+        </div>
+
+        <!-- Rejected -->
+        <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+
+            <div class="flex items-start justify-between">
+
+                <div>
+
+                    <p class="text-sm font-medium text-gray-500">
+                        Rejected
+                    </p>
+
+                    <h2 class="text-4xl font-bold text-gray-800 mt-3">
+                        {{ $totalRejected }}
+                    </h2>
+
+                </div>
+
+                <div class="bg-red-100 text-red-700 p-4 rounded-2xl text-xl">
+                    ✖
+                </div>
+
+            </div>
+
+            <p class="text-sm text-gray-400 mt-5">
+                Request ditolak admin
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- Filter -->
+    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-5 mb-6">
+
+        <form method="GET">
+
+            <div class="flex flex-col lg:flex-row gap-3">
+
+                <!-- Search -->
+                <input
+                    type="text"
+                    name="search"
                     value="{{ request('search') }}"
+                    placeholder="Cari barang..."
+                    class="flex-1 rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
 
-                <select name="type" class="border px-3 py-2 rounded">
-                    <option value="">Semua</option>
-                    <option value="IN" {{ request('type') == 'IN' ? 'selected' : '' }}>IN</option>
-                    <option value="OUT" {{ request('type') == 'OUT' ? 'selected' : '' }}>OUT</option>
+                <!-- Filter -->
+                <select
+                    name="type"
+                    class="rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-blue-500"
+                >
+                    <option value="">Semua Tipe</option>
+
+                    <option
+                        value="IN"
+                        {{ request('type') == 'IN' ? 'selected' : '' }}
+                    >
+                        Barang Masuk
+                    </option>
+
+                    <option
+                        value="OUT"
+                        {{ request('type') == 'OUT' ? 'selected' : '' }}
+                    >
+                        Barang Keluar
+                    </option>
+
                 </select>
 
-                <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                <!-- Button -->
+                <button
+                    type="submit"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-xl transition"
+                >
                     Filter
                 </button>
 
-            </form>
+            </div>
 
-            <!-- TABLE -->
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="bg-gray-200 text-left">
-                            <th class="p-3">Barang</th>
-                            <th class="p-3">Qty</th>
-                            <th class="p-3">Tipe</th>
-                            <th class="p-3">User</th>
-                            <th class="p-3">Note</th>
-                            <th class="p-3 text-center">Aksi</th>
-                        </tr>
-                    </thead>
+        </form>
 
-                    <tbody>
-                        @forelse($requests as $req)
-                        <tr class="border-b hover:bg-gray-50">
+    </div>
 
-                            <td class="p-3 font-medium">
-                                {{ $req->consumable->name ?? '-' }}
+    <!-- Table -->
+    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+
+        <div class="overflow-x-auto">
+
+            <table class="w-full">
+
+                <!-- Header -->
+                <thead class="bg-gray-50 border-b">
+
+                    <tr>
+
+                        <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">
+                            Barang
+                        </th>
+
+                        <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">
+                            Quantity
+                        </th>
+
+                        <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">
+                            Tipe
+                        </th>
+
+                        <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">
+                            User
+                        </th>
+
+                        <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">
+                            Catatan
+                        </th>
+
+                        <th class="text-center px-6 py-4 text-sm font-semibold text-gray-600">
+                            Aksi
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <!-- Body -->
+                <tbody>
+
+                    @forelse($requests as $req)
+
+                        <tr class="border-b last:border-b-0 hover:bg-gray-50 transition">
+
+                            <!-- Barang -->
+                            <td class="px-6 py-5">
+
+                                <div>
+
+                                    <p class="font-semibold text-gray-800">
+                                        {{ $req->consumable->name ?? '-' }}
+                                    </p>
+
+                                    <p class="text-sm text-gray-400">
+                                        ID Request: {{ $req->id }}
+                                    </p>
+
+                                </div>
+
                             </td>
 
-                            <td class="p-3">
-                                {{ $req->quantity }}
-                                <span class="text-gray-500 text-xs">
+                            <!-- Quantity -->
+                            <td class="px-6 py-5">
+
+                                <span class="font-medium text-gray-700">
+                                    {{ $req->quantity }}
+                                </span>
+
+                                <span class="text-gray-500 text-sm">
                                     {{ $req->consumable->unitMeasure->name ?? '' }}
                                 </span>
+
                             </td>
 
-                            <td class="p-3">
+                            <!-- Type -->
+                            <td class="px-6 py-5">
+
                                 @if($req->type == 'IN')
-                                    <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">
-                                        IN
+
+                                    <span class="bg-green-100 text-green-700 text-xs font-medium px-3 py-1 rounded-full">
+                                        Barang Masuk
                                     </span>
-                                @elseif($req->type == 'OUT')
-                                    <span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-semibold">
-                                        OUT
+
+                                @else
+
+                                    <span class="bg-red-100 text-red-700 text-xs font-medium px-3 py-1 rounded-full">
+                                        Barang Keluar
                                     </span>
+
                                 @endif
+
                             </td>
 
-                            <td class="p-3">
+                            <!-- User -->
+                            <td class="px-6 py-5 text-gray-700">
+
                                 {{ $req->user->name ?? '-' }}
+
                             </td>
 
-                            <td class="p-3 text-gray-600">
+                            <!-- Note -->
+                            <td class="px-6 py-5 text-gray-600">
+
                                 {{ $req->note ?? '-' }}
+
                             </td>
 
-                            <td class="p-3 text-center">
-                                <div class="flex justify-center gap-2">
+                            <!-- Action -->
+                            <td class="px-6 py-5">
 
-                                    <form method="POST" action="/admin/requests/{{ $req->id }}/approve">
+                                <div class="flex flex-wrap justify-center gap-2">
+
+                                    <!-- Approve -->
+                                    <form
+                                        method="POST"
+                                        action="/admin/requests/{{ $req->id }}/approve"
+                                    >
+
                                         @csrf
-                                        <button class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 text-xs">
+
+                                        <button
+                                            class="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition"
+                                        >
                                             Approve
                                         </button>
+
                                     </form>
 
-                                    <form method="POST" action="/admin/requests/{{ $req->id }}/reject">
+                                    <!-- Reject -->
+                                    <form
+                                        method="POST"
+                                        action="/admin/requests/{{ $req->id }}/reject"
+                                    >
+
                                         @csrf
-                                        <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs">
+
+                                        <button
+                                            class="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition"
+                                        >
                                             Reject
                                         </button>
+
                                     </form>
 
                                 </div>
+
                             </td>
 
                         </tr>
-                        @empty
+
+                    @empty
+
                         <tr>
-                            <td colspan="6" class="text-center p-6 text-gray-500">
+
+                            <td
+                                colspan="6"
+                                class="text-center py-12 text-gray-500"
+                            >
                                 Tidak ada request pending
                             </td>
-                        </tr>
-                        @endforelse
-                    </tbody>
 
-                </table>
-            </div>
+                        </tr>
+
+                    @endforelse
+
+                </tbody>
+
+            </table>
 
         </div>
 
     </div>
 
-</body>
-</html>
+</div>
+
+@endsection

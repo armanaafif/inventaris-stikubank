@@ -1,132 +1,366 @@
 @extends('layouts.app')
 
-<a href="/barang" class="text-blue-500 mb-4 inline-block">
-    ← Kembali ke daftar barang
-</a>
-
 @section('content')
-<div class="p-6 max-w-4xl mx-auto">
 
-    {{-- ALERT --}}
+<div class="max-w-6xl mx-auto">
+
+    <!-- Navigasi -->
+    <div class="flex flex-wrap gap-3 mb-6">
+
+        <a
+            href="/barang"
+            class="inline-flex items-center gap-2 bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 font-medium px-4 py-2 rounded-xl transition"
+        >
+            Daftar Barang
+        </a>
+
+        <a
+            href="/stock"
+            class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-xl transition"
+        >
+            Monitoring Stok
+        </a>
+
+    </div>
+
+    <!-- Alert -->
     @if($stock <= 0)
-        <div class="bg-red-100 text-red-700 p-3 rounded mb-4">
-            Stok habis
+        <div class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+            Stok barang sedang habis
         </div>
     @endif
 
     @if(session('success'))
-        <div class="bg-green-100 text-green-700 p-3 rounded mb-4">
+        <div class="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-green-700">
             {{ session('success') }}
         </div>
     @endif
 
     @if(session('error'))
-        <div class="bg-red-100 text-red-700 p-3 rounded mb-4">
+        <div class="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700">
             {{ session('error') }}
         </div>
     @endif
 
-    {{-- INFO --}}
-    <div class="bg-white p-5 rounded-xl shadow mb-6">
-        <h1 class="text-2xl font-bold mb-2">{{ $item->name }}</h1>
-        <p class="text-gray-600">
-            Stok:
-            <span class="font-semibold">
-                {{ $stock }} {{ $item->unitMeasure->name ?? '-' }}
-            </span>
-        </p>
-    </div>
+    <!-- Informasi Barang -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
 
-    {{-- FORM --}}
-    <div class="grid grid-cols-2 gap-6 mb-6">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
-        {{-- TAMBAH --}}
-        <form method="POST" action="/add-stock" class="bg-white p-5 rounded-xl shadow">
-            @csrf
-            <input type="hidden" name="consumable_id" value="{{ $item->id }}">
+            <div>
 
-            <input type="number" name="quantity"
-                class="w-full border p-2 rounded mb-2"
-                placeholder="Jumlah" required>
+                <h1 class="text-3xl font-bold text-gray-800">
+                    {{ $item->name }}
+                </h1>
 
-            <input type="text" name="note"
-                class="w-full border p-2 rounded mb-2"
-                placeholder="Catatan">
+                <p class="mt-2 text-gray-500">
+                    Detail stok dan histori transaksi barang
+                </p>
 
-            <button class="bg-green-600 text-white px-4 py-2 rounded w-full">
-                Tambah
-            </button>
-        </form>
+            </div>
 
-        {{-- PAKAI --}}
-        <form method="POST" action="/take-stock" class="bg-white p-5 rounded-xl shadow">
-            @csrf
-            <input type="hidden" name="consumable_id" value="{{ $item->id }}">
+            <div class="bg-blue-50 px-6 py-4 rounded-xl">
 
-            <input type="number" name="quantity"
-                max="{{ $stock }}"
-                class="w-full border p-2 rounded mb-2"
-                placeholder="Jumlah" required>
+                <p class="text-sm text-blue-600 mb-1">
+                    Total Stok
+                </p>
 
-            <input type="text" name="note"
-                class="w-full border p-2 rounded mb-2"
-                placeholder="Catatan">
+                <p class="text-3xl font-bold text-blue-700">
+                    {{ $stock }}
+                </p>
 
-            <button class="bg-red-600 text-white px-4 py-2 rounded w-full"
-                {{ $stock <= 0 ? 'disabled' : '' }}>
-                Gunakan
-            </button>
-        </form>
+                <p class="text-sm text-gray-500">
+                    {{ $item->unitMeasure->name ?? '-' }}
+                </p>
+
+            </div>
+
+        </div>
 
     </div>
 
-    {{-- FILTER --}}
-    <form method="GET" class="mb-4">
-        <select name="type" class="border p-2 rounded">
-            <option value="">Semua</option>
-            <option value="IN" {{ request('type') == 'IN' ? 'selected' : '' }}>Masuk</option>
-            <option value="OUT" {{ request('type') == 'OUT' ? 'selected' : '' }}>Keluar</option>
-        </select>
+    <!-- Form -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
 
-        <button class="bg-gray-700 text-white px-3 py-2 rounded">
-            Filter
-        </button>
-    </form>
+        <!-- Tambah Stok -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
 
-    {{-- HISTORI --}}
-    <div class="bg-white p-5 rounded-xl shadow">
+            <h2 class="text-xl font-semibold text-gray-800 mb-5">
+                Tambah Stok
+            </h2>
 
-        <h2 class="font-semibold mb-4">Histori Transaksi</h2>
+            <form method="POST" action="/add-stock">
 
-        <table class="w-full text-sm">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="p-3 text-left">Tipe</th>
-                    <th class="p-3 text-left">Jumlah</th>
-                    <th class="p-3 text-left">Catatan</th>
-                    <th class="p-3 text-left">Tanggal</th>
-                </tr>
-            </thead>
+                @csrf
 
-            <tbody>
-                @forelse($transactions as $trx)
-                <tr class="border-b">
-                    <td class="p-3">{{ $trx->type }}</td>
-                    <td class="p-3">{{ $trx->quantity }}</td>
-                    <td class="p-3">{{ $trx->note ?? '-' }}</td>
-                    <td class="p-3 text-gray-500">{{ $trx->created_at }}</td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="4" class="text-center p-6 text-gray-500">
-                        Belum ada transaksi
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+                <input
+                    type="hidden"
+                    name="consumable_id"
+                    value="{{ $item->id }}"
+                >
+
+                <!-- Quantity -->
+                <div class="mb-4">
+
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Jumlah
+                    </label>
+
+                    <input
+                        type="number"
+                        name="quantity"
+                        min="1"
+                        required
+                        placeholder="Masukkan jumlah"
+                        class="w-full rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    >
+
+                </div>
+
+                <!-- Catatan -->
+                <div class="mb-5">
+
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Catatan
+                    </label>
+
+                    <textarea
+                        name="note"
+                        rows="3"
+                        placeholder="Tambahkan catatan"
+                        class="w-full rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                    ></textarea>
+
+                </div>
+
+                <!-- Button -->
+                <button
+                    type="submit"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 rounded-xl transition"
+                >
+                    Tambah Stok
+                </button>
+
+            </form>
+
+        </div>
+
+        <!-- Gunakan Barang -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+
+            <h2 class="text-xl font-semibold text-gray-800 mb-5">
+                Gunakan Barang
+            </h2>
+
+            <form method="POST" action="/take-stock">
+
+                @csrf
+
+                <input
+                    type="hidden"
+                    name="consumable_id"
+                    value="{{ $item->id }}"
+                >
+
+                <!-- Quantity -->
+                <div class="mb-4">
+
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Jumlah
+                    </label>
+
+                    <input
+                        type="number"
+                        name="quantity"
+                        min="1"
+                        max="{{ $stock }}"
+                        required
+                        placeholder="Masukkan jumlah"
+                        class="w-full rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    >
+
+                </div>
+
+                <!-- Catatan -->
+                <div class="mb-5">
+
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Catatan
+                    </label>
+
+                    <textarea
+                        name="note"
+                        rows="3"
+                        placeholder="Tambahkan catatan"
+                        class="w-full rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    ></textarea>
+
+                </div>
+
+                <!-- Button -->
+                <button
+                    type="submit"
+                    {{ $stock <= 0 ? 'disabled' : '' }}
+                    class="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white font-medium py-3 rounded-xl transition"
+                >
+                    Gunakan Barang
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <!-- Header Histori -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
+
+        <div>
+
+            <h2 class="text-2xl font-bold text-gray-800">
+                Riwayat Transaksi
+            </h2>
+
+            <p class="text-gray-500 text-sm mt-1">
+                Histori barang masuk dan keluar
+            </p>
+
+        </div>
+
+        <!-- Filter -->
+        <form method="GET" class="flex gap-3">
+
+            <select
+                name="type"
+                class="rounded-xl border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-blue-500"
+            >
+                <option value="">Semua Transaksi</option>
+
+                <option
+                    value="IN"
+                    {{ request('type') == 'IN' ? 'selected' : '' }}
+                >
+                    Barang Masuk
+                </option>
+
+                <option
+                    value="OUT"
+                    {{ request('type') == 'OUT' ? 'selected' : '' }}
+                >
+                    Barang Keluar
+                </option>
+
+            </select>
+
+            <button
+                type="submit"
+                class="bg-gray-800 hover:bg-gray-900 text-white px-5 py-2 rounded-xl transition"
+            >
+                Filter
+            </button>
+
+        </form>
+
+    </div>
+
+    <!-- Table Histori -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+        <div class="overflow-x-auto">
+
+            <table class="w-full text-sm">
+
+                <!-- Header -->
+                <thead class="bg-gray-50 border-b">
+
+                    <tr>
+
+                        <th class="text-left px-6 py-4 font-semibold text-gray-600">
+                            Tipe
+                        </th>
+
+                        <th class="text-left px-6 py-4 font-semibold text-gray-600">
+                            Jumlah
+                        </th>
+
+                        <th class="text-left px-6 py-4 font-semibold text-gray-600">
+                            Catatan
+                        </th>
+
+                        <th class="text-left px-6 py-4 font-semibold text-gray-600">
+                            Tanggal
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <!-- Body -->
+                <tbody>
+
+                    @forelse($transactions as $trx)
+
+                        <tr class="border-b last:border-b-0 hover:bg-gray-50 transition">
+
+                            <!-- Tipe -->
+                            <td class="px-6 py-4">
+
+                                @if($trx->type == 'IN')
+
+                                    <span class="bg-green-100 text-green-700 text-xs font-medium px-3 py-1 rounded-full">
+                                        Masuk
+                                    </span>
+
+                                @else
+
+                                    <span class="bg-red-100 text-red-700 text-xs font-medium px-3 py-1 rounded-full">
+                                        Keluar
+                                    </span>
+
+                                @endif
+
+                            </td>
+
+                            <!-- Quantity -->
+                            <td class="px-6 py-4 font-medium text-gray-700">
+                                {{ $trx->quantity }}
+                            </td>
+
+                            <!-- Note -->
+                            <td class="px-6 py-4 text-gray-600">
+                                {{ $trx->note ?? '-' }}
+                            </td>
+
+                            <!-- Date -->
+                            <td class="px-6 py-4 text-gray-500">
+                                {{ $trx->created_at }}
+                            </td>
+
+                        </tr>
+
+                    @empty
+
+                        <tr>
+
+                            <td
+                                colspan="4"
+                                class="text-center py-10 text-gray-500"
+                            >
+                                Belum ada transaksi
+                            </td>
+
+                        </tr>
+
+                    @endforelse
+
+                </tbody>
+
+            </table>
+
+        </div>
 
     </div>
 
 </div>
+
 @endsection

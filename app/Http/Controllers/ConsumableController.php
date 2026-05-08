@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Services\ConsumableService;
 use App\Models\Consumable;
 use App\Models\StockRequest;
+use App\Models\UnitMeasure;
 
 class ConsumableController extends Controller
 {
@@ -17,14 +18,159 @@ class ConsumableController extends Controller
     }
 
     /**
-     * Tambah stok langsung (tanpa approval)
+     * Menampilkan daftar barang
+     */
+    public function index(Request $request)
+    {
+        $query = Consumable::with('unitMeasure');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Search barang
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->search) {
+
+            $query->where(
+                'name',
+                'like',
+                '%' . $request->search . '%'
+            );
+
+        }
+
+        $data = $query
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Ambil total stok tiap barang
+        |--------------------------------------------------------------------------
+        */
+
+        foreach ($data as $item) {
+
+            $item->stock = $this->service->getStock($item->id);
+
+        }
+
+        return view('list', compact('data'));
+    }
+
+    /**
+     * Menampilkan halaman tambah barang
+     */
+    public function create()
+    {
+        $units = UnitMeasure::latest()->get();
+
+        return view('create', compact('units'));
+    }
+
+    /**
+     * Menyimpan barang baru
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+
+            'name' => 'required|string|max:255',
+
+            'unit_id' => 'required|exists:unit_measures,id',
+
+            'minimum_stock' => 'required|integer|min:0'
+
+        ]);
+
+        Consumable::create([
+
+            'name' => $request->name,
+
+            'unit_id' => $request->unit_id,
+
+            'minimum_stock' => $request->minimum_stock
+
+        ]);
+
+        return redirect('/barang')
+            ->with('success', 'Barang berhasil ditambahkan');
+    }
+
+    /**
+     * Detail barang dan histori transaksi
+     */
+    public function show(Request $request, $id)
+    {
+        $item = Consumable::with('unitMeasure')
+            ->findOrFail($id);
+
+        $query = $item->transactions();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Filter transaksi
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->type) {
+
+            $query->where('type', $request->type);
+
+        }
+
+        $transactions = $query
+            ->latest()
+            ->get();
+
+        $stock = $this->service->getStock($id);
+
+        return view('detail', compact(
+            'item',
+            'stock',
+            'transactions'
+        ));
+    }
+
+    /**
+     * Halaman monitoring stok
+     */
+    public function stock()
+    {
+        $data = Consumable::with('unitMeasure')
+            ->latest()
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Hitung stok setiap barang
+        |--------------------------------------------------------------------------
+        */
+
+        foreach ($data as $item) {
+
+            $item->stock = $this->service->getStock($item->id);
+
+        }
+
+        return view('stock', compact('data'));
+    }
+
+    /**
+     * Tambah stok langsung
      */
     public function addStock(Request $request)
     {
         $request->validate([
+
             'consumable_id' => 'required|exists:consumables,id',
+
             'quantity' => 'required|integer|min:1',
+
             'note' => 'nullable|string'
+
         ]);
 
         $this->service->addStock(
@@ -38,17 +184,22 @@ class ConsumableController extends Controller
     }
 
     /**
-     * Gunakan barang (stok keluar)
+     * Gunakan barang
      */
     public function takeStock(Request $request)
     {
         $request->validate([
+
             'consumable_id' => 'required|exists:consumables,id',
+
             'quantity' => 'required|integer|min:1',
+
             'note' => 'nullable|string'
+
         ]);
 
         try {
+
             $this->service->takeStock(
                 $request->consumable_id,
                 $request->quantity,
@@ -59,60 +210,24 @@ class ConsumableController extends Controller
                 ->with('success', 'Barang berhasil digunakan');
 
         } catch (\Exception $e) {
+
             return redirect()->back()
                 ->with('error', $e->getMessage());
+
         }
     }
 
     /**
-     * API untuk mengambil stok
+     * API stok barang
      */
     public function getStock($id)
     {
         $stock = $this->service->getStock($id);
 
         return response()->json([
+
             'stock' => $stock
+
         ]);
-    }
-
-    /**
-     * Menampilkan daftar barang
-     */
-    public function index(Request $request)
-    {
-        $query = Consumable::with('unitMeasure');
-
-        if ($request->search) {
-            $query->where('name', 'like', '%' . $request->search . '%');
-        }
-
-        $data = $query->paginate(10)->withQueryString();
-
-        foreach ($data as $item) {
-            $item->stock = $this->service->getStock($item->id);
-        }
-
-        return view('list', compact('data'));
-    }
-
-    /**
-     * Detail barang dan histori transaksi
-     */
-    public function show(Request $request, $id)
-    {
-        $item = Consumable::with('unitMeasure')->findOrFail($id);
-
-        $query = $item->transactions();
-
-        if ($request->type) {
-            $query->where('type', $request->type);
-        }
-
-        $transactions = $query->latest()->get();
-
-        $stock = $this->service->getStock($id);
-
-        return view('detail', compact('item', 'stock', 'transactions'));
     }
 }

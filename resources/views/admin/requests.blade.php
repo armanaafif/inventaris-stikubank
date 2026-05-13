@@ -14,7 +14,7 @@
             </h1>
 
             <p class="text-gray-500 mt-2">
-                Kelola approval barang masuk dan keluar
+                Kelola approval barang masuk dan keluar inventaris
             </p>
 
         </div>
@@ -31,7 +31,7 @@
 
             <a
                 href="/barang"
-                class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-3 rounded-xl transition"
+                class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-3 rounded-xl transition shadow-sm"
             >
                 Kelola Barang
             </a>
@@ -51,17 +51,30 @@
                 <div>
 
                     <p class="text-sm font-medium text-gray-500">
-                        Pending
+                        Pending Request
                     </p>
 
-                    <h2 class="text-4xl font-bold text-gray-800 mt-3">
+                    <h2 class="text-4xl font-bold text-yellow-500 mt-3">
                         {{ $totalPending }}
                     </h2>
 
                 </div>
 
-                <div class="bg-yellow-100 text-yellow-700 p-4 rounded-2xl text-xl">
-                    ⏳
+                <div class="bg-yellow-100 text-yellow-700 p-4 rounded-2xl">
+
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        class="w-7 h-7"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor">
+
+                        <path stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+
+                    </svg>
+
                 </div>
 
             </div>
@@ -83,14 +96,27 @@
                         Approved
                     </p>
 
-                    <h2 class="text-4xl font-bold text-gray-800 mt-3">
+                    <h2 class="text-4xl font-bold text-green-600 mt-3">
                         {{ $totalApproved }}
                     </h2>
 
                 </div>
 
-                <div class="bg-green-100 text-green-700 p-4 rounded-2xl text-xl">
-                    ✔
+                <div class="bg-green-100 text-green-700 p-4 rounded-2xl">
+
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        class="w-7 h-7"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor">
+
+                        <path stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M5 13l4 4L19 7" />
+
+                    </svg>
+
                 </div>
 
             </div>
@@ -112,14 +138,27 @@
                         Rejected
                     </p>
 
-                    <h2 class="text-4xl font-bold text-gray-800 mt-3">
+                    <h2 class="text-4xl font-bold text-red-600 mt-3">
                         {{ $totalRejected }}
                     </h2>
 
                 </div>
 
-                <div class="bg-red-100 text-red-700 p-4 rounded-2xl text-xl">
-                    ✖
+                <div class="bg-red-100 text-red-700 p-4 rounded-2xl">
+
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        class="w-7 h-7"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor">
+
+                        <path stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+
+                    </svg>
+
                 </div>
 
             </div>
@@ -137,23 +176,26 @@
 
         <form method="GET">
 
-            <div class="flex flex-col lg:flex-row gap-3">
+            <div class="flex flex-col xl:flex-row gap-3">
 
                 <!-- Search -->
                 <input
                     type="text"
                     name="search"
                     value="{{ request('search') }}"
-                    placeholder="Cari barang..."
+                    placeholder="Cari nama barang..."
                     class="flex-1 rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
 
-                <!-- Filter -->
+                <!-- Filter Type -->
                 <select
                     name="type"
                     class="rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-blue-500"
                 >
-                    <option value="">Semua Tipe</option>
+
+                    <option value="">
+                        Semua Tipe
+                    </option>
 
                     <option
                         value="IN"
@@ -171,12 +213,12 @@
 
                 </select>
 
-                <!-- Button -->
+                <!-- Submit -->
                 <button
                     type="submit"
                     class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-xl transition"
                 >
-                    Filter
+                    Filter Data
                 </button>
 
             </div>
@@ -188,11 +230,28 @@
     <!-- Table -->
     <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
 
+        <!-- Header -->
+        <div class="flex items-center justify-between px-6 py-5 border-b bg-gray-50">
+
+            <div>
+
+                <h2 class="text-lg font-semibold text-gray-800">
+                    Data Approval Request
+                </h2>
+
+                <p class="text-sm text-gray-500 mt-1">
+                    Approval transaksi barang masuk dan keluar
+                </p>
+
+            </div>
+
+        </div>
+
         <div class="overflow-x-auto">
 
             <table class="w-full">
 
-                <!-- Header -->
+                <!-- Table Header -->
                 <thead class="bg-gray-50 border-b">
 
                     <tr>
@@ -225,7 +284,7 @@
 
                 </thead>
 
-                <!-- Body -->
+                <!-- Table Body -->
                 <tbody>
 
                     @forelse($requests as $req)
@@ -242,7 +301,7 @@
                                     </p>
 
                                     <p class="text-sm text-gray-400">
-                                        ID Request: {{ $req->id }}
+                                        Request ID: {{ $req->id }}
                                     </p>
 
                                 </div>
@@ -252,13 +311,17 @@
                             <!-- Quantity -->
                             <td class="px-6 py-5">
 
-                                <span class="font-medium text-gray-700">
-                                    {{ $req->quantity }}
-                                </span>
+                                <div class="flex items-center gap-2">
 
-                                <span class="text-gray-500 text-sm">
-                                    {{ $req->consumable->unitMeasure->name ?? '' }}
-                                </span>
+                                    <span class="inline-flex items-center bg-blue-100 text-blue-700 text-sm font-medium px-3 py-1 rounded-full">
+                                        {{ $req->quantity }}
+                                    </span>
+
+                                    <span class="text-gray-500 text-sm">
+                                        {{ $req->consumable->unitMeasure->name ?? '' }}
+                                    </span>
+
+                                </div>
 
                             </td>
 
@@ -282,7 +345,7 @@
                             </td>
 
                             <!-- User -->
-                            <td class="px-6 py-5 text-gray-700">
+                            <td class="px-6 py-5 text-gray-700 font-medium">
 
                                 {{ $req->user->name ?? '-' }}
 
@@ -309,6 +372,7 @@
                                         @csrf
 
                                         <button
+                                            type="submit"
                                             class="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition"
                                         >
                                             Approve
@@ -325,6 +389,7 @@
                                         @csrf
 
                                         <button
+                                            type="submit"
                                             class="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition"
                                         >
                                             Reject
@@ -344,9 +409,9 @@
 
                             <td
                                 colspan="6"
-                                class="text-center py-12 text-gray-500"
+                                class="text-center py-14 text-gray-500"
                             >
-                                Tidak ada request pending
+                                Tidak ada request tersedia
                             </td>
 
                         </tr>

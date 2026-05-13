@@ -6,77 +6,147 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Judul Website -->
-    <title>Inventaris</title>
+    <!-- Title -->
+    <title>Inventaris Stikubank</title>
 
-    <!-- Asset CSS dan JS dari Vite -->
+    <!-- Vite -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
 </head>
 
-<body class="bg-gray-100">
+<body class="bg-gray-100 text-gray-800">
 
     <!-- Navbar -->
-    <nav class="bg-white shadow p-4 flex justify-between items-center">
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
 
-        <!-- Menu Navigasi -->
-        <div class="flex gap-4">
+        <div class="max-w-7xl mx-auto px-6">
 
-            <a 
-                href="/dashboard"
-                class="font-semibold hover:text-blue-500"
-            >
-                Dashboard
-            </a>
+            <div class="flex items-center justify-between h-16">
 
-            <a 
-                href="/barang"
-                class="hover:text-blue-500"
-            >
-                Barang
-            </a>
+                <!-- Left -->
+                <div class="flex items-center gap-10">
 
-            <a 
-                href="/admin/requests"
-                class="hover:text-blue-500"
-            >
-                Request
-            </a>
+                    <!-- Logo -->
+                    <a
+                        href="/dashboard"
+                        class="text-xl font-bold text-blue-600"
+                    >
+                        Inventaris Stikubank
+                    </a>
+
+                    <!-- Navigation -->
+                    <div class="hidden md:flex items-center gap-6 text-sm font-medium">
+
+                        <a
+                            href="/dashboard"
+                            class="hover:text-blue-600 transition"
+                        >
+                            Dashboard
+                        </a>
+
+                        <a
+                            href="/barang"
+                            class="hover:text-blue-600 transition"
+                        >
+                            Barang
+                        </a>
+
+                        <a
+                            href="/barang/create"
+                            class="hover:text-blue-600 transition"
+                        >
+                            Tambah Barang
+                        </a>
+
+                        <a
+                            href="/stock"
+                            class="hover:text-blue-600 transition"
+                        >
+                            Stok
+                        </a>
+
+                        <a
+                            href="/admin/requests"
+                            class="hover:text-blue-600 transition"
+                        >
+                            Request
+                        </a>
+
+                    </div>
+
+                </div>
+
+                <!-- Right -->
+                <div class="flex items-center gap-4">
+
+                    <!-- User Info -->
+                    <div class="text-right hidden sm:block">
+
+                        <p class="text-sm font-semibold text-gray-800">
+                            {{ auth()->user()->name ?? 'User' }}
+                        </p>
+
+                        <p class="text-xs text-gray-500 capitalize">
+                            {{ auth()->user()->role ?? 'User' }}
+                        </p>
+
+                    </div>
+
+                    <!-- User Avatar -->
+                    <div class="w-11 h-11 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
+
+                        {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
+
+                    </div>
+
+                    <!-- Logout -->
+                    <form method="POST" action="{{ route('logout') }}">
+
+                        @csrf
+
+                        <button
+                            type="submit"
+                            class="bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-xl transition"
+                        >
+                            Logout
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
 
         </div>
 
-        <!-- Tombol Logout -->
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
-
-            <button
-                type="submit"
-                class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded"
-            >
-                Logout
-            </button>
-        </form>
-
     </nav>
 
-    <!-- Konten Utama -->
-    <main class="p-6">
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-6 py-8">
 
-        <!-- Notifikasi Sukses -->
+        <!-- Success Message -->
         @if(session('success'))
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+
+            <div class="mb-6 rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-green-700">
+
                 {{ session('success') }}
+
             </div>
+
         @endif
 
-        <!-- Notifikasi Error -->
+        <!-- Error Message -->
         @if(session('error'))
-            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+
+            <div class="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-red-700">
+
                 {{ session('error') }}
+
             </div>
+
         @endif
 
-        <!-- Isi Halaman -->
+        <!-- Page Content -->
         @yield('content')
 
     </main>

@@ -14,7 +14,7 @@
             </h1>
 
             <p class="text-gray-500 mt-2">
-                Menambahkan data barang inventaris baru
+                Tambahkan data barang inventaris baru
             </p>
 
         </div>
@@ -23,32 +23,24 @@
         <div class="flex flex-wrap gap-3">
 
             <a
-                href="/barang"
-                class="inline-flex items-center justify-center bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 font-medium px-5 py-3 rounded-xl transition"
-            >
-                ← Daftar Barang
-            </a>
-
-            <a
                 href="/dashboard"
                 class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-3 rounded-xl transition"
             >
                 Dashboard
             </a>
 
+            <a
+                href="/barang"
+                class="inline-flex items-center justify-center bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-5 py-3 rounded-xl transition"
+            >
+                Daftar Barang
+            </a>
+
         </div>
 
     </div>
 
-    <!-- Alert -->
-    @if(session('success'))
-
-        <div class="mb-6 rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-green-700">
-            {{ session('success') }}
-        </div>
-
-    @endif
-
+    <!-- Error Validasi -->
     @if($errors->any())
 
         <div class="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4">
@@ -89,7 +81,7 @@
                     type="text"
                     name="name"
                     value="{{ old('name') }}"
-                    placeholder="Masukkan nama barang"
+                    placeholder="Contoh: Kabel LAN"
                     class="w-full rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                 >
@@ -100,11 +92,11 @@
             <div class="mb-6">
 
                 <label class="block text-sm font-medium text-gray-700 mb-2">
-                    Satuan
+                    Satuan Barang
                 </label>
 
                 <select
-                    name="unit_id"
+                    name="unit_measure_id"
                     class="w-full rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                 >
@@ -113,23 +105,29 @@
                         Pilih satuan
                     </option>
 
-                    @foreach($units as $unit)
+                    @forelse($units as $unit)
 
                         <option
                             value="{{ $unit->id }}"
-                            {{ old('unit_id') == $unit->id ? 'selected' : '' }}
+                            {{ old('unit_measure_id') == $unit->id ? 'selected' : '' }}
                         >
                             {{ $unit->name }}
                         </option>
 
-                    @endforeach
+                    @empty
+
+                        <option disabled>
+                            Data satuan belum tersedia
+                        </option>
+
+                    @endforelse
 
                 </select>
 
             </div>
 
-            <!-- Minimum Stok -->
-            <div class="mb-8">
+            <!-- Minimum Stock -->
+            <div class="mb-6">
 
                 <label class="block text-sm font-medium text-gray-700 mb-2">
                     Minimum Stok
@@ -139,10 +137,38 @@
                     type="number"
                     name="minimum_stock"
                     value="{{ old('minimum_stock') }}"
-                    placeholder="Masukkan minimum stok"
+                    placeholder="Contoh: 5"
+                    min="0"
                     class="w-full rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                 >
+
+                <p class="text-sm text-gray-500 mt-2">
+                    Digunakan sebagai batas minimum peringatan stok.
+                </p>
+
+            </div>
+
+            <!-- Stok Awal -->
+            <div class="mb-8">
+
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Stok Awal
+                </label>
+
+                <input
+                    type="number"
+                    name="initial_stock"
+                    value="{{ old('initial_stock', 0) }}"
+                    placeholder="Contoh: 15"
+                    min="0"
+                    class="w-full rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                >
+
+                <p class="text-sm text-gray-500 mt-2">
+                    Sistem akan otomatis membuat histori transaksi stok masuk.
+                </p>
 
             </div>
 

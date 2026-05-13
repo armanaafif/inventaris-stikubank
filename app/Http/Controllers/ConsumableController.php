@@ -79,21 +79,49 @@ class ConsumableController extends Controller
 
             'name' => 'required|string|max:255',
 
-            'unit_id' => 'required|exists:unit_measures,id',
+            'unit_measure_id' => 'required|exists:unit_measures,id',
 
-            'minimum_stock' => 'required|integer|min:0'
+            'minimum_stock' => 'required|integer|min:0',
+
+            'initial_stock' => 'required|integer|min:0'
 
         ]);
 
-        Consumable::create([
+        /*
+        |--------------------------------------------------------------------------
+        | Simpan barang
+        |--------------------------------------------------------------------------
+        */
+
+        $item = Consumable::create([
 
             'name' => $request->name,
 
-            'unit_id' => $request->unit_id,
+            'unit_measure_id' => $request->unit_measure_id,
 
             'minimum_stock' => $request->minimum_stock
 
         ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Tambahkan stok awal otomatis
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->initial_stock > 0) {
+
+            $this->service->addStock(
+
+                $item->id,
+
+                $request->initial_stock,
+
+                'Stok awal barang'
+
+            );
+
+        }
 
         return redirect('/barang')
             ->with('success', 'Barang berhasil ditambahkan');

@@ -7,7 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 class UnitMeasure extends Model
 {
     protected $fillable = [
+
         'name'
+
     ];
 
     /**
@@ -17,7 +19,7 @@ class UnitMeasure extends Model
     {
         return $this->hasMany(
             Consumable::class,
-            'unit_id'
+            'unit_measure_id'
         );
     }
 }

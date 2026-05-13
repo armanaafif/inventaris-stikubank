@@ -1,9 +1,17 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Controller
+|--------------------------------------------------------------------------
+*/
+
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ConsumableController;
 use App\Http\Controllers\Admin\StockRequestController;
-use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -12,7 +20,9 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', function () {
+
     return view('welcome');
+
 });
 
 /*
@@ -21,27 +31,9 @@ Route::get('/', function () {
 |--------------------------------------------------------------------------
 */
 
-Route::get('/dashboard', function () {
-
-    $items = \App\Models\Consumable::all();
-
-    $totalBarang = $items->count();
-
-    $totalStock = \App\Models\ConsumableTransaction::selectRaw("
-        COALESCE(SUM(CASE WHEN type = 'IN' THEN quantity ELSE 0 END),0) -
-        COALESCE(SUM(CASE WHEN type = 'OUT' THEN quantity ELSE 0 END),0)
-        as total
-    ")->value('total');
-
-    $pendingRequest = \App\Models\StockRequest::where('status', 'pending')->count();
-
-    return view('dashboard', compact(
-        'totalBarang',
-        'totalStock',
-        'pendingRequest'
-    ));
-
-})->middleware(['auth'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth'])
+    ->name('dashboard');
 
 /*
 |--------------------------------------------------------------------------
@@ -64,7 +56,7 @@ Route::middleware('auth')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Halaman daftar barang
+| Daftar Barang
 |--------------------------------------------------------------------------
 */
 
@@ -72,7 +64,7 @@ Route::get('/barang', [ConsumableController::class, 'index']);
 
 /*
 |--------------------------------------------------------------------------
-| Halaman tambah barang
+| Tambah Barang
 |--------------------------------------------------------------------------
 */
 
@@ -82,7 +74,7 @@ Route::post('/barang/store', [ConsumableController::class, 'store']);
 
 /*
 |--------------------------------------------------------------------------
-| Detail barang
+| Detail Barang
 |--------------------------------------------------------------------------
 */
 
@@ -90,7 +82,7 @@ Route::get('/barang/{id}', [ConsumableController::class, 'show']);
 
 /*
 |--------------------------------------------------------------------------
-| Monitoring stok
+| Monitoring Stok
 |--------------------------------------------------------------------------
 */
 
@@ -98,7 +90,15 @@ Route::get('/stock', [ConsumableController::class, 'stock']);
 
 /*
 |--------------------------------------------------------------------------
-| Manipulasi stok
+| Histori Transaksi
+|--------------------------------------------------------------------------
+*/
+
+Route::get('/history', [ConsumableController::class, 'history']);
+
+/*
+|--------------------------------------------------------------------------
+| Manipulasi Stok
 |--------------------------------------------------------------------------
 */
 
@@ -114,11 +114,23 @@ Route::post('/take-stock', [ConsumableController::class, 'takeStock']);
 
 Route::middleware(['auth', 'admin'])->group(function () {
 
+    /*
+    |--------------------------------------------------------------------------
+    | Approval Request
+    |--------------------------------------------------------------------------
+    */
+
     Route::get('/admin/requests', [StockRequestController::class, 'index']);
 
-    Route::post('/admin/requests/{id}/approve', [StockRequestController::class, 'approve']);
+    Route::post('/admin/requests/{id}/approve', [
+        StockRequestController::class,
+        'approve'
+    ]);
 
-    Route::post('/admin/requests/{id}/reject', [StockRequestController::class, 'reject']);
+    Route::post('/admin/requests/{id}/reject', [
+        StockRequestController::class,
+        'reject'
+    ]);
 
 });
 

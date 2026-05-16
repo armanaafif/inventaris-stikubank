@@ -15,13 +15,38 @@ class ConsumableTransaction extends Model
 
     ];
 
-    /**
-     * Relasi barang
-     */
+    /*
+    |--------------------------------------------------------------------------
+    | Relasi Barang
+    |--------------------------------------------------------------------------
+    */
+
     public function consumable()
     {
         return $this->belongsTo(
             Consumable::class
         );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scope Barang Masuk
+    |--------------------------------------------------------------------------
+    */
+
+    public function scopeIn($query)
+    {
+        return $query->where('type', 'IN');
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scope Barang Keluar
+    |--------------------------------------------------------------------------
+    */
+
+    public function scopeOut($query)
+    {
+        return $query->where('type', 'OUT');
     }
 }

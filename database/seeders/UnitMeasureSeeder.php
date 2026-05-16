@@ -39,18 +39,9 @@ class UnitMeasureSeeder extends Seeder
 
             'BOTOL',
             'KALENG',
-            'TABUNG',
 
             'LEMBAR',
             'RIM',
-            'BUKU',
-
-            'BIJI',
-            'BUNGKUS',
-            'KARUNG',
-
-            'KABEL',
-            'TONER',
             'CARTRIDGE'
 
         ];

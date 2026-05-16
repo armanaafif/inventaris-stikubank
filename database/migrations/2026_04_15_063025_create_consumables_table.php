@@ -7,25 +7,75 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Run migrations
      */
     public function up(): void
     {
         Schema::create('consumables', function (Blueprint $table) {
+
             $table->id();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Informasi Barang
+            |--------------------------------------------------------------------------
+            */
+
             $table->string('name');
 
-            $table->foreignId('unit_id')->constrained('organizational_units');
-            $table->foreignId('unit_measure_id')->constrained('unit_measures');
+            /*
+            |--------------------------------------------------------------------------
+            | Satuan Barang
+            |--------------------------------------------------------------------------
+            */
 
-            $table->integer('minimum_stock')->default(0);
+            $table->foreignId('unit_measure_id')
+                ->constrained('unit_measures');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Minimum Stock
+            |--------------------------------------------------------------------------
+            */
+
+            $table->integer('minimum_stock')
+                ->default(0);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Kondisi Barang
+            |--------------------------------------------------------------------------
+            */
+
+            $table->enum('condition', [
+
+                'BARU',
+                'BEKAS',
+                'LAYAK',
+                'RUSAK'
+
+            ])->default('BARU');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Status Barang
+            |--------------------------------------------------------------------------
+            */
+
+            $table->enum('status', [
+
+                'AKTIF',
+                'NONAKTIF'
+
+            ])->default('AKTIF');
 
             $table->timestamps();
+
         });
     }
 
     /**
-     * Reverse the migrations.
+     * Reverse migrations
      */
     public function down(): void
     {

@@ -1,111 +1,84 @@
 <?php
 
-namespace App\Http\Controllers\Auth;
+namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginRequest;
-use Illuminate\Http\RedirectResponse;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
 
-class AuthenticatedSessionController extends Controller
+class UserManagementController extends Controller
 {
     /**
      * --------------------------------------------------------------------------
-     * Halaman Login
+     * List User
      * --------------------------------------------------------------------------
      */
 
-    public function create(): View
+    public function index()
     {
-        return view('auth.login');
+        /*
+        |--------------------------------------------------------------------------
+        | Ambil semua user
+        |--------------------------------------------------------------------------
+        */
+
+        $users = User::latest()->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Statistik
+        |--------------------------------------------------------------------------
+        */
+
+        $totalUser = User::count();
+
+        $pendingUser = User::where('status', 'pending')->count();
+
+        $approvedUser = User::where('status', 'approved')->count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Return View
+        |--------------------------------------------------------------------------
+        */
+
+        return view('admin.users', compact(
+
+            'users',
+            'totalUser',
+            'pendingUser',
+            'approvedUser'
+
+        ));
     }
 
     /**
      * --------------------------------------------------------------------------
-     * Proses Login
+     * Approve User
      * --------------------------------------------------------------------------
      */
 
-    public function store(LoginRequest $request): RedirectResponse
+    public function approve($id)
     {
         /*
         |--------------------------------------------------------------------------
-        | Autentikasi User
+        | Cari user
         |--------------------------------------------------------------------------
         */
 
-        $request->authenticate();
+        $user = User::findOrFail($id);
 
         /*
         |--------------------------------------------------------------------------
-        | Regenerate Session
+        | Approve
         |--------------------------------------------------------------------------
         */
 
-        $request->session()->regenerate();
+        $user->update([
 
-        /*
-        |--------------------------------------------------------------------------
-        | Ambil User Login
-        |--------------------------------------------------------------------------
-        */
+            'status' => 'approved'
 
-        $user = Auth::user();
-
-        /*
-        |--------------------------------------------------------------------------
-        | Cek Status Approval
-        |--------------------------------------------------------------------------
-        */
-
-        if ($user->status !== 'approved') {
-
-            Auth::logout();
-
-            return redirect('/login')->withErrors([
-
-                'email' => 'Akun anda belum disetujui admin.'
-
-            ]);
-
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Redirect Dashboard
-        |--------------------------------------------------------------------------
-        */
-
-        return redirect('/dashboard');
-    }
-
-    /**
-     * --------------------------------------------------------------------------
-     * Logout User
-     * --------------------------------------------------------------------------
-     */
-
-    public function destroy(Request $request): RedirectResponse
-    {
-        /*
-        |--------------------------------------------------------------------------
-        | Logout
-        |--------------------------------------------------------------------------
-        */
-
-        Auth::guard('web')->logout();
-
-        /*
-        |--------------------------------------------------------------------------
-        | Hapus Session
-        |--------------------------------------------------------------------------
-        */
-
-        $request->session()->invalidate();
-
-        $request->session()->regenerateToken();
+        ]);
 
         /*
         |--------------------------------------------------------------------------
@@ -113,6 +86,51 @@ class AuthenticatedSessionController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        return redirect('/');
+        return redirect()->back()->with(
+
+            'success',
+
+            'User berhasil diapprove'
+
+        );
+    }
+
+    /**
+     * --------------------------------------------------------------------------
+     * Reject User
+     * --------------------------------------------------------------------------
+     */
+
+    public function reject($id)
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | Cari user
+        |--------------------------------------------------------------------------
+        */
+
+        $user = User::findOrFail($id);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Hapus user pending
+        |--------------------------------------------------------------------------
+        */
+
+        $user->delete();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Redirect
+        |--------------------------------------------------------------------------
+        */
+
+        return redirect()->back()->with(
+
+            'success',
+
+            'User berhasil ditolak'
+
+        );
     }
 }

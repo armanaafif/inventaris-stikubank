@@ -126,6 +126,98 @@
 
             </div>
 
+            <!-- Kondisi Barang -->
+            <div class="mb-6">
+
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Kondisi Barang
+                </label>
+
+                <select
+                    name="condition"
+                    class="w-full rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                >
+
+                    <option value="">
+                        Pilih kondisi barang
+                    </option>
+
+                    <option
+                        value="BARU"
+                        {{ old('condition') == 'BARU' ? 'selected' : '' }}
+                    >
+                        Baru
+                    </option>
+
+                    <option
+                        value="BEKAS"
+                        {{ old('condition') == 'BEKAS' ? 'selected' : '' }}
+                    >
+                        Bekas
+                    </option>
+
+                    <option
+                        value="LAYAK"
+                        {{ old('condition') == 'LAYAK' ? 'selected' : '' }}
+                    >
+                        Layak Pakai
+                    </option>
+
+                    <option
+                        value="RUSAK"
+                        {{ old('condition') == 'RUSAK' ? 'selected' : '' }}
+                    >
+                        Rusak / Tidak Layak
+                    </option>
+
+                </select>
+
+                <p class="text-sm text-gray-500 mt-2">
+                    Digunakan untuk monitoring kualitas barang inventaris.
+                </p>
+
+            </div>
+
+            <!-- Status Barang -->
+            <div class="mb-6">
+
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Status Barang
+                </label>
+
+                <select
+                    name="status"
+                    class="w-full rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                >
+
+                    <option value="">
+                        Pilih status barang
+                    </option>
+
+                    <option
+                        value="AKTIF"
+                        {{ old('status') == 'AKTIF' ? 'selected' : '' }}
+                    >
+                        Aktif
+                    </option>
+
+                    <option
+                        value="NONAKTIF"
+                        {{ old('status') == 'NONAKTIF' ? 'selected' : '' }}
+                    >
+                        Nonaktif
+                    </option>
+
+                </select>
+
+                <p class="text-sm text-gray-500 mt-2">
+                    Barang nonaktif tidak digunakan dalam operasional.
+                </p>
+
+            </div>
+
             <!-- Minimum Stock -->
             <div class="mb-6">
 

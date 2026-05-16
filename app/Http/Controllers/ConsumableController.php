@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Services\ConsumableService;
 use App\Models\Consumable;
-use App\Models\StockRequest;
+use App\Models\ConsumableTransaction;
 use App\Models\UnitMeasure;
 
 class ConsumableController extends Controller
@@ -18,7 +18,9 @@ class ConsumableController extends Controller
     }
 
     /**
-     * Menampilkan daftar barang
+     * --------------------------------------------------------------------------
+     * Daftar Barang
+     * --------------------------------------------------------------------------
      */
     public function index(Request $request)
     {
@@ -26,7 +28,7 @@ class ConsumableController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Search barang
+        | Search Barang
         |--------------------------------------------------------------------------
         */
 
@@ -47,7 +49,7 @@ class ConsumableController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Ambil total stok tiap barang
+        | Hitung Stock
         |--------------------------------------------------------------------------
         */
 
@@ -57,21 +59,25 @@ class ConsumableController extends Controller
 
         }
 
-        return view('list', compact('data'));
+        return view('barang.list', compact('data'));
     }
 
     /**
-     * Menampilkan halaman tambah barang
+     * --------------------------------------------------------------------------
+     * Halaman Tambah Barang
+     * --------------------------------------------------------------------------
      */
     public function create()
     {
         $units = UnitMeasure::latest()->get();
 
-        return view('create', compact('units'));
+        return view('barang.create', compact('units'));
     }
 
     /**
-     * Menyimpan barang baru
+     * --------------------------------------------------------------------------
+     * Simpan Barang
+     * --------------------------------------------------------------------------
      */
     public function store(Request $request)
     {
@@ -89,7 +95,7 @@ class ConsumableController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Simpan barang
+        | Simpan Barang
         |--------------------------------------------------------------------------
         */
 
@@ -105,7 +111,7 @@ class ConsumableController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Tambahkan stok awal otomatis
+        | Tambah Stock Awal
         |--------------------------------------------------------------------------
         */
 
@@ -128,7 +134,9 @@ class ConsumableController extends Controller
     }
 
     /**
-     * Detail barang dan histori transaksi
+     * --------------------------------------------------------------------------
+     * Detail Barang
+     * --------------------------------------------------------------------------
      */
     public function show(Request $request, $id)
     {
@@ -139,7 +147,7 @@ class ConsumableController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Filter transaksi
+        | Filter Transaksi
         |--------------------------------------------------------------------------
         */
 
@@ -155,7 +163,7 @@ class ConsumableController extends Controller
 
         $stock = $this->service->getStock($id);
 
-        return view('detail', compact(
+        return view('barang.detail', compact(
             'item',
             'stock',
             'transactions'
@@ -163,7 +171,9 @@ class ConsumableController extends Controller
     }
 
     /**
-     * Halaman monitoring stok
+     * --------------------------------------------------------------------------
+     * Monitoring Stock
+     * --------------------------------------------------------------------------
      */
     public function stock()
     {
@@ -173,7 +183,7 @@ class ConsumableController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Hitung stok setiap barang
+        | Hitung Stock
         |--------------------------------------------------------------------------
         */
 
@@ -183,11 +193,90 @@ class ConsumableController extends Controller
 
         }
 
-        return view('stock', compact('data'));
+        return view('barang.stock', compact('data'));
     }
 
     /**
-     * Tambah stok langsung
+     * --------------------------------------------------------------------------
+     * Histori Transaksi
+     * --------------------------------------------------------------------------
+     */
+    public function history(Request $request)
+    {
+        $query = ConsumableTransaction::with([
+            'consumable',
+            'consumable.unitMeasure'
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Search Barang
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->search) {
+
+            $query->whereHas('consumable', function ($q) use ($request) {
+
+                $q->where(
+                    'name',
+                    'like',
+                    '%' . $request->search . '%'
+                );
+
+            });
+
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Filter Type
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->type) {
+
+            $query->where('type', $request->type);
+
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Data Transaksi
+        |--------------------------------------------------------------------------
+        */
+
+        $transactions = $query
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Statistik
+        |--------------------------------------------------------------------------
+        */
+
+        $barangMasuk = ConsumableTransaction::where('type', 'IN')
+            ->sum('quantity');
+
+        $barangKeluar = ConsumableTransaction::where('type', 'OUT')
+            ->sum('quantity');
+
+        $totalTransaksi = ConsumableTransaction::count();
+
+        return view('history.index', compact(
+            'transactions',
+            'barangMasuk',
+            'barangKeluar',
+            'totalTransaksi'
+        ));
+    }
+
+    /**
+     * --------------------------------------------------------------------------
+     * Tambah Stock
+     * --------------------------------------------------------------------------
      */
     public function addStock(Request $request)
     {
@@ -208,11 +297,13 @@ class ConsumableController extends Controller
         );
 
         return redirect()->back()
-            ->with('success', 'Stok berhasil ditambahkan');
+            ->with('success', 'Stock berhasil ditambahkan');
     }
 
     /**
-     * Gunakan barang
+     * --------------------------------------------------------------------------
+     * Gunakan Barang
+     * --------------------------------------------------------------------------
      */
     public function takeStock(Request $request)
     {
@@ -246,7 +337,9 @@ class ConsumableController extends Controller
     }
 
     /**
-     * API stok barang
+     * --------------------------------------------------------------------------
+     * API Stock
+     * --------------------------------------------------------------------------
      */
     public function getStock($id)
     {

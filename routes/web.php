@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ConsumableController;
+
 use App\Http\Controllers\Admin\StockRequestController;
+use App\Http\Controllers\Admin\UserManagementController;
 
 /*
 |--------------------------------------------------------------------------
@@ -31,9 +33,12 @@ Route::get('/', function () {
 |--------------------------------------------------------------------------
 */
 
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth'])
-    ->name('dashboard');
+Route::middleware('auth')->group(function () {
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
+
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -54,57 +59,61 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-/*
-|--------------------------------------------------------------------------
-| Daftar Barang
-|--------------------------------------------------------------------------
-*/
+Route::middleware('auth')->group(function () {
 
-Route::get('/barang', [ConsumableController::class, 'index']);
+    /*
+    |--------------------------------------------------------------------------
+    | Daftar Barang
+    |--------------------------------------------------------------------------
+    */
 
-/*
-|--------------------------------------------------------------------------
-| Tambah Barang
-|--------------------------------------------------------------------------
-*/
+    Route::get('/barang', [ConsumableController::class, 'index']);
 
-Route::get('/barang/create', [ConsumableController::class, 'create']);
+    /*
+    |--------------------------------------------------------------------------
+    | Tambah Barang
+    |--------------------------------------------------------------------------
+    */
 
-Route::post('/barang/store', [ConsumableController::class, 'store']);
+    Route::get('/barang/create', [ConsumableController::class, 'create']);
 
-/*
-|--------------------------------------------------------------------------
-| Detail Barang
-|--------------------------------------------------------------------------
-*/
+    Route::post('/barang/store', [ConsumableController::class, 'store']);
 
-Route::get('/barang/{id}', [ConsumableController::class, 'show']);
+    /*
+    |--------------------------------------------------------------------------
+    | Detail Barang
+    |--------------------------------------------------------------------------
+    */
 
-/*
-|--------------------------------------------------------------------------
-| Monitoring Stok
-|--------------------------------------------------------------------------
-*/
+    Route::get('/barang/{id}', [ConsumableController::class, 'show']);
 
-Route::get('/stock', [ConsumableController::class, 'stock']);
+    /*
+    |--------------------------------------------------------------------------
+    | Monitoring Stok
+    |--------------------------------------------------------------------------
+    */
 
-/*
-|--------------------------------------------------------------------------
-| Histori Transaksi
-|--------------------------------------------------------------------------
-*/
+    Route::get('/stock', [ConsumableController::class, 'stock']);
 
-Route::get('/history', [ConsumableController::class, 'history']);
+    /*
+    |--------------------------------------------------------------------------
+    | Histori Transaksi
+    |--------------------------------------------------------------------------
+    */
 
-/*
-|--------------------------------------------------------------------------
-| Manipulasi Stok
-|--------------------------------------------------------------------------
-*/
+    Route::get('/history', [ConsumableController::class, 'history']);
 
-Route::post('/add-stock', [ConsumableController::class, 'addStock']);
+    /*
+    |--------------------------------------------------------------------------
+    | Manipulasi Stok
+    |--------------------------------------------------------------------------
+    */
 
-Route::post('/take-stock', [ConsumableController::class, 'takeStock']);
+    Route::post('/add-stock', [ConsumableController::class, 'addStock']);
+
+    Route::post('/take-stock', [ConsumableController::class, 'takeStock']);
+
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -112,24 +121,55 @@ Route::post('/take-stock', [ConsumableController::class, 'takeStock']);
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'admin'])->group(function () {
+Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Approval Request
+    | Approval Request Barang
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/admin/requests', [StockRequestController::class, 'index']);
+    Route::get('/requests', [StockRequestController::class, 'index']);
 
-    Route::post('/admin/requests/{id}/approve', [
+    Route::post('/requests/{id}/approve', [
+
         StockRequestController::class,
         'approve'
+
     ]);
 
-    Route::post('/admin/requests/{id}/reject', [
+    Route::post('/requests/{id}/reject', [
+
         StockRequestController::class,
         'reject'
+
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Management User
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/users', [
+
+        UserManagementController::class,
+        'index'
+
+    ]);
+
+    Route::post('/users/{id}/approve', [
+
+        UserManagementController::class,
+        'approve'
+
+    ]);
+
+    Route::post('/users/{id}/reject', [
+
+        UserManagementController::class,
+        'reject'
+
     ]);
 
 });

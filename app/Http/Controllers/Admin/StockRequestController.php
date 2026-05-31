@@ -46,6 +46,15 @@ class StockRequestController extends Controller
             $query->where('type', $request->type);
         }
 
+        // Filter berdasarkan status (pending / approved / rejected)
+        if ($request->filled('status') && $request->status != '') {
+            $query->where('status', $request->status);
+        } else {
+            // Default: tampilkan semua status, tidak hanya pending
+            // Jika ingin default hanya pending, ubah baris ini menjadi:
+            // $query->where('status', 'pending');
+        }
+
         // Search berdasarkan nama barang (consumable name)
         if ($request->filled('search')) {
             $query->whereHas('consumable', function ($q) use ($request) {
@@ -53,19 +62,18 @@ class StockRequestController extends Controller
             });
         }
 
-        // Ambil hanya status pending, diurutkan terbaru
-        $requests = $query
-            ->where('status', 'pending')
-            ->latest()
-            ->get();
+        // Ambil data dengan pagination (10 per halaman)
+        $requests = $query->latest()->paginate(10)->withQueryString();
 
         // Statistik untuk tampilan
+        $totalRequests = StockRequest::count();
         $totalPending = StockRequest::where('status', 'pending')->count();
         $totalApproved = StockRequest::where('status', 'approved')->count();
         $totalRejected = StockRequest::where('status', 'rejected')->count();
 
         return view('admin.requests', compact(
             'requests',
+            'totalRequests',
             'totalPending',
             'totalApproved',
             'totalRejected'
@@ -94,7 +102,7 @@ class StockRequestController extends Controller
         if ($req->type === 'OUT') {
             $currentStock = $this->service->getStock($req->consumable_id);
             if ($currentStock < $req->quantity) {
-                return back()->with('error', 'Stok tidak mencukupi');
+                return back()->with('error', 'Stok tidak mencukupi. Stok saat ini: ' . $currentStock);
             }
         }
 
@@ -103,13 +111,13 @@ class StockRequestController extends Controller
             $this->service->addStock(
                 $req->consumable_id,
                 $req->quantity,
-                $req->note
+                $req->note . ' [Approved by ' . auth()->user()->name . ']'
             );
         } elseif ($req->type === 'OUT') {
             $this->service->takeStock(
                 $req->consumable_id,
                 $req->quantity,
-                $req->note
+                $req->note . ' [Approved by ' . auth()->user()->name . ']'
             );
         }
 

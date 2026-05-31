@@ -1,267 +1,170 @@
-@extends('layouts.app')
+@extends('layouts.dashboard-sidebar')
+
+@section('title', 'Daftar Barang - Inventaris Stikubank')
 
 @section('content')
-
-<div class="max-w-7xl mx-auto">
-
+<div class="space-y-6">
+    
     <!-- Header -->
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 mb-8">
-
+    <div class="flex justify-between items-center">
         <div>
-
-            <h1 class="text-3xl font-bold text-gray-800">
-                Daftar Barang
-            </h1>
-
-            <p class="text-gray-500 mt-2">
-                Monitoring kondisi barang, stok inventaris, dan aktivitas penggunaan
-            </p>
-
+            <h1 class="text-2xl font-bold text-gray-800">Daftar Barang</h1>
+            <p class="text-sm text-gray-500 mt-1">Kelola data barang inventaris</p>
         </div>
-
-        <div class="flex flex-wrap gap-3">
-
-            <a
-                href="/dashboard"
-                class="inline-flex items-center justify-center bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 font-medium px-5 py-3 rounded-xl transition"
-            >
-                Dashboard
-            </a>
-
-            <a
-                href="/history"
-                class="inline-flex items-center justify-center bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 font-medium px-5 py-3 rounded-xl transition"
-            >
-                Histori
-            </a>
-
-            <a
-                href="/barang/create"
-                class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-3 rounded-xl transition shadow-sm"
-            >
-                Tambah Barang
-            </a>
-
-        </div>
-
+        <a href="{{ route('barang.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded-lg transition flex items-center gap-2">
+            <i class="fas fa-plus"></i> Tambah Barang
+        </a>
     </div>
 
-    <!-- Search -->
-    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 mb-6">
+    <!-- Statistik Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-400">Total Barang</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">{{ $data->total() }}</p>
+                </div>
+                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-boxes text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-400">Total Stok</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">{{ number_format($data->sum(function($item) { return $item->stock ?? 0; })) }}</p>
+                </div>
+                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-chart-line text-green-600"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-400">Barang Aktif</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">{{ $data->where('status', 'AKTIF')->count() }}</p>
+                </div>
+                <div class="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-check-circle text-emerald-600"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-400">Barang Nonaktif</p>
+                    <p class="text-2xl font-bold text-gray-800 mt-1">{{ $data->where('status', 'NONAKTIF')->count() }}</p>
+                </div>
+                <div class="w-10 h-10 bg-rose-100 rounded-full flex items-center justify-center">
+                    <i class="fas fa-ban text-rose-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        <form method="GET" class="flex flex-col md:flex-row gap-3">
+    <!-- Search & Filter -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <form method="GET" action="{{ route('barang.index') }}" class="flex flex-wrap gap-3">
+            <input type="text" name="search" value="{{ request('search') }}" 
+                placeholder="Cari nama barang..." 
+                class="flex-1 min-w-[200px] rounded-lg border border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+            
+            <select name="condition" class="rounded-lg border border-gray-300 px-4 py-2 text-sm w-36">
+                <option value="">Semua Kondisi</option>
+                <option value="BARU" {{ request('condition') == 'BARU' ? 'selected' : '' }}>Baru</option>
+                <option value="BEKAS" {{ request('condition') == 'BEKAS' ? 'selected' : '' }}>Bekas</option>
+                <option value="LAYAK" {{ request('condition') == 'LAYAK' ? 'selected' : '' }}>Layak</option>
+                <option value="RUSAK" {{ request('condition') == 'RUSAK' ? 'selected' : '' }}>Rusak</option>
+            </select>
 
-            <input
-                type="text"
-                name="search"
-                value="{{ request('search') }}"
-                placeholder="Cari nama barang..."
-                class="flex-1 rounded-xl border border-gray-300 px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
+            <select name="status" class="rounded-lg border border-gray-300 px-4 py-2 text-sm w-36">
+                <option value="">Semua Status</option>
+                <option value="AKTIF" {{ request('status') == 'AKTIF' ? 'selected' : '' }}>Aktif</option>
+                <option value="NONAKTIF" {{ request('status') == 'NONAKTIF' ? 'selected' : '' }}>Nonaktif</option>
+            </select>
 
-            <button
-                type="submit"
-                class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-3 rounded-xl transition"
-            >
-                Cari
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
+                <i class="fas fa-search mr-1"></i> Filter
             </button>
-
+            <a href="{{ route('barang.index') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm">
+                <i class="fas fa-redo mr-1"></i> Reset
+            </a>
         </form>
-
     </div>
 
-    <!-- Table -->
-    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-
+    <!-- Tabel Barang -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">
-
             <table class="w-full">
-
                 <thead class="bg-gray-50 border-b">
-
-                    <tr>
-
-                        <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">
-                            Barang
-                        </th>
-
-                        <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">
-                            Kondisi
-                        </th>
-
-                        <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">
-                            Status Barang
-                        </th>
-
-                        <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">
-                            Total Stok
-                        </th>
-
-                        <th class="text-left px-6 py-4 text-sm font-semibold text-gray-600">
-                            Status Stok
-                        </th>
-
-                        <th class="text-center px-6 py-4 text-sm font-semibold text-gray-600">
-                            Aksi
-                        </th>
-
-                    </tr>
-
+                    <tr class="text-left text-xs font-medium text-gray-500">
+                        <th class="px-6 py-4">Nama Barang</th>
+                        <th class="px-6 py-4">Satuan</th>
+                        <th class="px-6 py-4">Stok</th>
+                        <th class="px-6 py-4">Min Stok</th>
+                        <th class="px-6 py-4">Kondisi</th>
+                        <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4 text-center">Aksi</th>
+                     </tr>
                 </thead>
-
-                <tbody>
-
+                <tbody class="divide-y divide-gray-100">
                     @forelse($data as $item)
-
-                        <tr class="border-b last:border-b-0 hover:bg-gray-50 transition">
-
-                            <!-- Barang -->
-                            <td class="px-6 py-5">
-
-                                <div>
-
-                                    <p class="font-semibold text-gray-800">
-                                        {{ $item->name }}
-                                    </p>
-
-                                    <p class="text-sm text-gray-400 mt-1">
-                                        {{ $item->unitMeasure->name ?? '-' }}
-                                    </p>
-
-                                </div>
-
-                            </td>
-
-                            <!-- Kondisi -->
-                            <td class="px-6 py-5">
-
-                                @if($item->condition == 'BARU')
-
-                                    <span class="bg-blue-100 text-blue-700 text-xs font-medium px-3 py-1 rounded-full">
-                                        Baru
-                                    </span>
-
-                                @elseif($item->condition == 'BEKAS')
-
-                                    <span class="bg-yellow-100 text-yellow-700 text-xs font-medium px-3 py-1 rounded-full">
-                                        Bekas
-                                    </span>
-
-                                @elseif($item->condition == 'LAYAK')
-
-                                    <span class="bg-green-100 text-green-700 text-xs font-medium px-3 py-1 rounded-full">
-                                        Layak
-                                    </span>
-
-                                @else
-
-                                    <span class="bg-red-100 text-red-700 text-xs font-medium px-3 py-1 rounded-full">
-                                        Rusak
-                                    </span>
-
-                                @endif
-
-                            </td>
-
-                            <!-- Status Barang -->
-                            <td class="px-6 py-5">
-
-                                @if($item->status == 'AKTIF')
-
-                                    <span class="bg-green-100 text-green-700 text-xs font-medium px-3 py-1 rounded-full">
-                                        Aktif
-                                    </span>
-
-                                @else
-
-                                    <span class="bg-gray-200 text-gray-700 text-xs font-medium px-3 py-1 rounded-full">
-                                        Nonaktif
-                                    </span>
-
-                                @endif
-
-                            </td>
-
-                            <!-- Total Stock -->
-                            <td class="px-6 py-5">
-
-                                <span class="inline-flex items-center bg-blue-100 text-blue-700 text-sm font-semibold px-3 py-1 rounded-full">
-                                    {{ $item->stock }}
-                                </span>
-
-                            </td>
-
-                            <!-- Status Stok -->
-                            <td class="px-6 py-5">
-
-                                @if($item->stock <= 0)
-
-                                    <span class="bg-red-100 text-red-700 text-xs font-medium px-3 py-1 rounded-full">
-                                        Habis
-                                    </span>
-
-                                @elseif($item->stock <= $item->minimum_stock)
-
-                                    <span class="bg-yellow-100 text-yellow-700 text-xs font-medium px-3 py-1 rounded-full">
-                                        Menipis
-                                    </span>
-
-                                @else
-
-                                    <span class="bg-green-100 text-green-700 text-xs font-medium px-3 py-1 rounded-full">
-                                        Aman
-                                    </span>
-
-                                @endif
-
-                            </td>
-
-                            <!-- Action -->
-                            <td class="px-6 py-5 text-center">
-
-                                <a
-                                    href="/barang/{{ $item->id }}"
-                                    class="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-xl transition"
-                                >
-                                    Detail
+                    <tr class="text-sm hover:bg-gray-50 transition">
+                        <td class="px-6 py-4">
+                            <p class="font-semibold text-gray-800">{{ $item->name }}</p>
+                            <p class="text-xs text-gray-400 mt-0.5">ID: {{ $item->id }}</p>
+                         </td>
+                        <td class="px-6 py-4 text-gray-600">{{ $item->unitMeasure->name ?? '-' }}</td>
+                        <td class="px-6 py-4">
+                            <span class="font-semibold {{ ($item->stock ?? 0) <= $item->minimum_stock ? 'text-red-600' : 'text-gray-800' }}">
+                                {{ number_format($item->stock ?? 0) }}
+                            </span>
+                         </td>
+                        <td class="px-6 py-4 text-gray-600">{{ number_format($item->minimum_stock) }}</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex px-2 py-1 text-xs rounded-full 
+                                {{ $item->condition == 'BARU' ? 'bg-blue-100 text-blue-700' : 
+                                   ($item->condition == 'BEKAS' ? 'bg-yellow-100 text-yellow-700' : 
+                                   ($item->condition == 'LAYAK' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')) }}">
+                                {{ $item->condition }}
+                            </span>
+                         </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex px-2 py-1 text-xs rounded-full {{ $item->status == 'AKTIF' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700' }}">
+                                {{ $item->status }}
+                            </span>
+                         </td>
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <a href="{{ route('barang.show', $item->id) }}" class="text-blue-600 hover:text-blue-800" title="Detail">
+                                    <i class="fas fa-eye"></i>
                                 </a>
-
-                            </td>
-
-                        </tr>
-
+                            </div>
+                         </td>
+                     </tr>
                     @empty
-
-                        <tr>
-
-                            <td
-                                colspan="6"
-                                class="py-16 text-center text-gray-500"
-                            >
-
-                                Belum ada data barang.
-
-                            </td>
-
-                        </tr>
-
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-400">
+                            <i class="fas fa-box-open text-4xl mb-2 block"></i>
+                            Belum ada data barang
+                         </td>
+                     </tr>
                     @endforelse
-
                 </tbody>
-
-            </table>
-
+             </table>
         </div>
 
+        <!-- Pagination -->
+        @if($data->hasPages())
+        <div class="px-6 py-4 border-t border-gray-100 bg-gray-50">
+            {{ $data->links() }}
+        </div>
+        @endif
     </div>
-
-    <!-- Pagination -->
-    <div class="mt-6">
-
-        {{ $data->links() }}
-
-    </div>
-
 </div>
-
 @endsection

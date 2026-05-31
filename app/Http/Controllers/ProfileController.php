@@ -2,17 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
     /**
-     * Display the user's profile form.
+     * --------------------------------------------------------------------------
+     * Tampilkan halaman edit profile
+     * --------------------------------------------------------------------------
+     * 
+     * @param Request $request
+     * @return View
      */
     public function edit(Request $request): View
     {
@@ -22,23 +27,56 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update the user's profile information.
+     * --------------------------------------------------------------------------
+     * Update profile user
+     * --------------------------------------------------------------------------
+     * 
+     * @param Request $request
+     * @return RedirectResponse
      */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    public function update(Request $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        // Validasi input
+        $rules = [
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+        ];
+
+        // Validasi password hanya jika diisi
+        if ($request->filled('password')) {
+            $rules['password'] = 'required|string|min:8|confirmed';
         }
 
-        $request->user()->save();
+        $request->validate($rules);
 
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+        // Update name dan email
+        $user->name = $request->name;
+        $user->email = $request->email;
+
+        // Reset email_verified_at jika email berubah
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        // Update password jika diisi
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        $user->save();
+
+        return Redirect::route('profile.edit')->with('success', 'Profil berhasil diperbarui!');
     }
 
     /**
-     * Delete the user's account.
+     * --------------------------------------------------------------------------
+     * Hapus akun user
+     * --------------------------------------------------------------------------
+     * 
+     * @param Request $request
+     * @return RedirectResponse
      */
     public function destroy(Request $request): RedirectResponse
     {

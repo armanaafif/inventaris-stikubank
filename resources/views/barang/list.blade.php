@@ -1,11 +1,18 @@
 @extends('layouts.dashboard-sidebar')
 
 @section('title', 'Daftar Barang - Inventaris Stikubank')
+@section('page-title', 'Daftar Barang')
+@section('page-subtitle', 'Kelola data barang inventaris')
 
 @section('content')
 <div class="space-y-6">
     
-    <!-- Header -->
+    <!--
+    |--------------------------------------------------------------------------
+    | HEADER
+    |--------------------------------------------------------------------------
+    -->
+
     <div class="flex justify-between items-center">
         <div>
             <h1 class="text-2xl font-bold text-gray-800">Daftar Barang</h1>
@@ -16,7 +23,12 @@
         </a>
     </div>
 
-    <!-- Statistik Cards -->
+    <!--
+    |--------------------------------------------------------------------------
+    | STATISTIK CARDS
+    |--------------------------------------------------------------------------
+    -->
+
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
             <div class="flex items-center justify-between">
@@ -67,7 +79,12 @@
         </div>
     </div>
 
-    <!-- Search & Filter -->
+    <!--
+    |--------------------------------------------------------------------------
+    | SEARCH & FILTER
+    |--------------------------------------------------------------------------
+    -->
+
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
         <form method="GET" action="{{ route('barang.index') }}" class="flex flex-wrap gap-3">
             <input type="text" name="search" value="{{ request('search') }}" 
@@ -97,7 +114,12 @@
         </form>
     </div>
 
-    <!-- Tabel Barang -->
+    <!--
+    |--------------------------------------------------------------------------
+    | TABEL BARANG
+    |--------------------------------------------------------------------------
+    -->
+
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full">
@@ -110,7 +132,7 @@
                         <th class="px-6 py-4">Kondisi</th>
                         <th class="px-6 py-4">Status</th>
                         <th class="px-6 py-4 text-center">Aksi</th>
-                     </tr>
+                    </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse($data as $item)
@@ -140,23 +162,35 @@
                             </span>
                          </td>
                         <td class="px-6 py-4 text-center">
-                            <div class="flex items-center justify-center gap-2">
-                                <a href="{{ route('barang.show', $item->id) }}" class="text-blue-600 hover:text-blue-800" title="Detail">
+                            <div class="flex items-center justify-center gap-3">
+                                <!-- Tombol Detail -->
+                                <a href="{{ route('barang.show', $item->id) }}" class="text-blue-600 hover:text-blue-800 transition" title="Detail">
                                     <i class="fas fa-eye"></i>
                                 </a>
+                                
+                                <!-- Tombol Hapus dengan Alert Konfirmasi -->
+                                <form method="POST" action="{{ route('barang.destroy', $item->id) }}" class="inline delete-form">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="button" 
+                                            class="text-red-600 hover:text-red-800 transition delete-btn"
+                                            data-name="{{ $item->name }}"
+                                            data-id="{{ $item->id }}"
+                                            title="Hapus">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
                             </div>
-                         </td>
-                     </tr>
+                          </tr>
                     @empty
                     <tr>
                         <td colspan="7" class="px-6 py-12 text-center text-gray-400">
                             <i class="fas fa-box-open text-4xl mb-2 block"></i>
                             Belum ada data barang
-                         </td>
-                     </tr>
+                          </tr>
                     @endforelse
                 </tbody>
-             </table>
+            </table>
         </div>
 
         <!-- Pagination -->
@@ -166,5 +200,87 @@
         </div>
         @endif
     </div>
+
+    <!--
+    |--------------------------------------------------------------------------
+    | INFORMASI
+    |--------------------------------------------------------------------------
+    -->
+
+    <div class="bg-blue-50 border-l-4 border-blue-500 rounded-r-xl p-4">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-info-circle text-blue-500"></i>
+            <div class="text-sm text-blue-800">
+                <p><strong>Catatan:</strong> Menghapus barang akan menghapus seluruh riwayat transaksi barang tersebut. Pastikan data yang akan dihapus sudah benar.</p>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!--
+|--------------------------------------------------------------------------
+| SWEETALERT UNTUK KONFIRMASI HAPUS
+|--------------------------------------------------------------------------
+-->
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    // Konfigurasi SweetAlert untuk tombol hapus
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const form = this.closest('.delete-form');
+            const namaBarang = this.getAttribute('data-name');
+            
+            Swal.fire({
+                title: 'Apakah Anda yakin?',
+                html: `Anda akan menghapus barang <strong>${namaBarang}</strong>.<br>Data yang terkait akan hilang!`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
+    });
+</script>
+
+<!--
+|--------------------------------------------------------------------------
+| SWEETALERT NOTIFIKASI SUKSES / ERROR
+|--------------------------------------------------------------------------
+-->
+
+@if(session('success'))
+<script>
+    Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: '{{ session('success') }}',
+        confirmButtonColor: '#10b981',
+        timer: 3000,
+        timerProgressBar: true
+    });
+</script>
+@endif
+
+@if(session('error'))
+<script>
+    Swal.fire({
+        icon: 'error',
+        title: 'Gagal!',
+        text: '{{ session('error') }}',
+        confirmButtonColor: '#ef4444'
+    });
+</script>
+@endif
+
 @endsection

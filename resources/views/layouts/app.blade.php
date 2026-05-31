@@ -12,6 +12,9 @@
     <!-- Vite -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 </head>
 
 <body class="bg-gray-100 text-gray-800">
@@ -26,52 +29,26 @@
                 <!-- Left -->
                 <div class="flex items-center gap-10">
 
-                    <!-- Logo -->
-                    <a
-                        href="/dashboard"
-                        class="text-xl font-bold text-blue-600"
-                    >
+                    <a href="/dashboard" class="text-xl font-bold text-blue-600">
                         Inventaris Stikubank
                     </a>
 
-                    <!-- Navigation -->
                     <div class="hidden md:flex items-center gap-6 text-sm font-medium">
+                        <a href="/dashboard" class="hover:text-blue-600 transition">Dashboard</a>
+                        <a href="/barang" class="hover:text-blue-600 transition">Barang</a>
+                        <a href="/barang/create" class="hover:text-blue-600 transition">Tambah Barang</a>
+                        <a href="/stock" class="hover:text-blue-600 transition">Stok</a>
+                        <a href="/history" class="hover:text-blue-600 transition">History</a>
 
-                        <a
-                            href="/dashboard"
-                            class="hover:text-blue-600 transition"
-                        >
-                            Dashboard
-                        </a>
+                        @php
+                            $user = auth()->user();
+                        @endphp
 
-                        <a
-                            href="/barang"
-                            class="hover:text-blue-600 transition"
-                        >
-                            Barang
-                        </a>
+                        @if($user && $user->role === 'admin')
+                        <a href="/admin/users" class="hover:text-blue-600 transition text-purple-600">Manajemen User</a>
+                        @endif
 
-                        <a
-                            href="/barang/create"
-                            class="hover:text-blue-600 transition"
-                        >
-                            Tambah Barang
-                        </a>
-
-                        <a
-                            href="/stock"
-                            class="hover:text-blue-600 transition"
-                        >
-                            Stok
-                        </a>
-
-                        <a
-                            href="/admin/requests"
-                            class="hover:text-blue-600 transition"
-                        >
-                            Request
-                        </a>
-
+                        <a href="/admin/requests" class="hover:text-blue-600 transition">Request</a>
                     </div>
 
                 </div>
@@ -79,38 +56,26 @@
                 <!-- Right -->
                 <div class="flex items-center gap-4">
 
-                    <!-- User Info -->
+                    @php
+                        $userName = auth()->user()->name ?? 'User';
+                        $userRole = auth()->user()->role ?? 'User';
+                        $userInitial = strtoupper(substr($userName, 0, 1));
+                    @endphp
+
                     <div class="text-right hidden sm:block">
-
-                        <p class="text-sm font-semibold text-gray-800">
-                            {{ auth()->user()->name ?? 'User' }}
-                        </p>
-
-                        <p class="text-xs text-gray-500 capitalize">
-                            {{ auth()->user()->role ?? 'User' }}
-                        </p>
-
+                        <p class="text-sm font-semibold text-gray-800">{{ $userName }}</p>
+                        <p class="text-xs text-gray-500 capitalize">{{ $userRole }}</p>
                     </div>
 
-                    <!-- User Avatar -->
                     <div class="w-11 h-11 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-sm">
-
-                        {{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}
-
+                        {{ $userInitial }}
                     </div>
 
-                    <!-- Logout -->
                     <form method="POST" action="{{ route('logout') }}">
-
                         @csrf
-
-                        <button
-                            type="submit"
-                            class="bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-xl transition"
-                        >
+                        <button type="submit" class="bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-xl transition">
                             Logout
                         </button>
-
                     </form>
 
                 </div>
@@ -123,33 +88,64 @@
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-6 py-8">
-
-        <!-- Success Message -->
-        @if(session('success'))
-
-            <div class="mb-6 rounded-2xl border border-green-200 bg-green-50 px-5 py-4 text-green-700">
-
-                {{ session('success') }}
-
-            </div>
-
-        @endif
-
-        <!-- Error Message -->
-        @if(session('error'))
-
-            <div class="mb-6 rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-red-700">
-
-                {{ session('error') }}
-
-            </div>
-
-        @endif
-
-        <!-- Page Content -->
         @yield('content')
-
     </main>
 
 </body>
+
+<!-- SweetAlert Notifikasi -->
+@php
+    $successMsg = session('success');
+    $errorMsg = session('error');
+    $hasErrors = $errors->any();
+    $showCreateModal = session('showCreateModal');
+    $errorList = $errors->all();
+@endphp
+
+@if($successMsg)
+<script>
+Swal.fire({
+    icon: 'success',
+    title: 'Berhasil!',
+    text: '{{ $successMsg }}',
+    confirmButtonColor: '#10b981',
+    confirmButtonText: 'OK',
+    timer: 3000,
+    timerProgressBar: true
+});
+</script>
+@endif
+
+@if($errorMsg)
+<script>
+Swal.fire({
+    icon: 'error',
+    title: 'Gagal!',
+    text: '{{ $errorMsg }}',
+    confirmButtonColor: '#ef4444',
+    confirmButtonText: 'OK',
+    timer: 4000,
+    timerProgressBar: true
+});
+</script>
+@endif
+
+@if($hasErrors && !$showCreateModal)
+<script>
+let errorHtml = '<div style="text-align: left;">';
+@foreach($errorList as $error)
+errorHtml += '• {{ $error }}<br>';
+@endforeach
+errorHtml += '</div>';
+
+Swal.fire({
+    icon: 'warning',
+    title: 'Validasi Gagal',
+    html: errorHtml,
+    confirmButtonColor: '#f59e0b',
+    confirmButtonText: 'Perbaiki'
+});
+</script>
+@endif
+
 </html>

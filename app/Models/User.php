@@ -11,25 +11,36 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     protected $fillable = [
-
         'name',
         'email',
         'password',
-        'role'
-
+        'role',
+        'status'
     ];
 
     protected $hidden = [
-
         'password',
         'remember_token'
-
     ];
 
     protected $casts = [
-
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
-
     ];
+
+    /**
+     * Cek apakah user adalah admin
+     */
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Cek apakah user sudah diapprove
+     */
+    public function isApproved()
+    {
+        return $this->status === 'approved';
+    }
 }

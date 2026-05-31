@@ -177,7 +177,7 @@
 
     </div>
 
-    <!-- Placeholder Grafik -->
+    <!-- GRAFIK 1: Trend Barang Masuk & Keluar -->
     <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 mb-8">
 
         <div class="flex items-center justify-between mb-6">
@@ -185,35 +185,70 @@
             <div>
 
                 <h2 class="text-xl font-semibold text-gray-800">
-                    Grafik Aktivitas
+                    Trend Barang Masuk & Keluar
                 </h2>
 
                 <p class="text-sm text-gray-500 mt-1">
-                    Visualisasi aktivitas transaksi barang
+                    Grafik aktivitas transaksi 6 bulan terakhir
                 </p>
 
             </div>
 
-            <span class="bg-yellow-100 text-yellow-700 text-xs font-medium px-3 py-1 rounded-full">
-                Coming Soon
-            </span>
+            <div class="flex gap-3 text-xs">
+                <div class="flex items-center gap-1">
+                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                    <span class="text-gray-600">Barang Masuk</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                    <span class="text-gray-600">Barang Keluar</span>
+                </div>
+            </div>
 
         </div>
 
-        <!-- Dummy Chart Area -->
-        <div class="h-72 rounded-2xl border-2 border-dashed border-gray-200 flex items-center justify-center">
+        <canvas id="trendChart" height="100"></canvas>
 
-            <div class="text-center">
+    </div>
 
-                <p class="text-gray-400 font-medium">
-                    Grafik transaksi akan ditampilkan di sini
-                </p>
+    <!-- GRAFIK 2: Top 5 Barang Paling Sering Dipakai & Masuk -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
 
-                <p class="text-sm text-gray-400 mt-2">
-                    Nantinya menggunakan Chart.js
+        <!-- Top 5 Barang Paling Sering Dipakai -->
+        <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+
+            <div class="mb-6">
+
+                <h2 class="text-xl font-semibold text-gray-800">
+                    5 Barang Paling Sering Dipakai
+                </h2>
+
+                <p class="text-sm text-gray-500 mt-1">
+                    Barang dengan frekuensi keluar tertinggi
                 </p>
 
             </div>
+
+            <canvas id="topUsedChart" height="200"></canvas>
+
+        </div>
+
+        <!-- Top 5 Barang Paling Sering Masuk -->
+        <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+
+            <div class="mb-6">
+
+                <h2 class="text-xl font-semibold text-gray-800">
+                    5 Barang Paling Sering Masuk
+                </h2>
+
+                <p class="text-sm text-gray-500 mt-1">
+                    Barang dengan frekuensi masuk tertinggi
+                </p>
+
+            </div>
+
+            <canvas id="topInChart" height="200"></canvas>
 
         </div>
 
@@ -410,5 +445,121 @@
     </div>
 
 </div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // Grafik 1: Trend Line Chart
+        const trendCtx = document.getElementById('trendChart');
+        if (trendCtx && @json($chartLabels ?? []).length > 0) {
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: @json($chartLabels ?? []),
+                    datasets: [
+                        {
+                            label: 'Barang Masuk',
+                            data: @json($barangMasukData ?? []),
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#10b981',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                        },
+                        {
+                            label: 'Barang Keluar',
+                            data: @json($barangKeluarData ?? []),
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.05)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#ef4444',
+                            pointBorderColor: '#fff',
+                            pointBorderWidth: 2,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { mode: 'index', intersect: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                        x: { ticks: { font: { size: 11 } } }
+                    }
+                }
+            });
+        }
+
+        // Grafik 2: Top 5 Barang Paling Sering Dipakai (Bar Chart)
+        const usedCtx = document.getElementById('topUsedChart');
+        if (usedCtx && @json($topUsedLabels ?? []).length > 0) {
+            new Chart(usedCtx, {
+                type: 'bar',
+                data: {
+                    labels: @json($topUsedLabels ?? []),
+                    datasets: [{
+                        label: 'Jumlah Dipakai',
+                        data: @json($topUsedData ?? []),
+                        backgroundColor: '#f59e0b',
+                        borderRadius: 8,
+                        barPercentage: 0.6,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: { callbacks: { label: (ctx) => `Dipakai: ${ctx.raw} unit` } }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 }, title: { display: true, text: 'Jumlah (unit)' } }
+                    }
+                }
+            });
+        }
+
+        // Grafik 3: Top 5 Barang Paling Sering Masuk (Bar Chart)
+        const inCtx = document.getElementById('topInChart');
+        if (inCtx && @json($topInLabels ?? []).length > 0) {
+            new Chart(inCtx, {
+                type: 'bar',
+                data: {
+                    labels: @json($topInLabels ?? []),
+                    datasets: [{
+                        label: 'Jumlah Masuk',
+                        data: @json($topInData ?? []),
+                        backgroundColor: '#10b981',
+                        borderRadius: 8,
+                        barPercentage: 0.6,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: { callbacks: { label: (ctx) => `Masuk: ${ctx.raw} unit` } }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 }, title: { display: true, text: 'Jumlah (unit)' } }
+                    }
+                }
+            });
+        }
+
+    });
+</script>
 
 @endsection

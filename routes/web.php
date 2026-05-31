@@ -22,10 +22,8 @@ use App\Http\Controllers\Admin\UserManagementController;
 */
 
 Route::get('/', function () {
-
     return view('welcome');
-
-});
+})->name('welcome');
 
 /*
 |--------------------------------------------------------------------------
@@ -34,10 +32,7 @@ Route::get('/', function () {
 */
 
 Route::middleware('auth')->group(function () {
-
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->name('dashboard');
-
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 });
 
 /*
@@ -47,10 +42,7 @@ Route::middleware('auth')->group(function () {
 */
 
 Route::middleware('auth')->group(function () {
-
-    Route::get('/profile', [ProfileController::class, 'edit'])
-        ->name('profile.edit');
-
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
 });
 
 /*
@@ -67,7 +59,7 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/barang', [ConsumableController::class, 'index']);
+    Route::get('/barang', [ConsumableController::class, 'index'])->name('barang.index');
 
     /*
     |--------------------------------------------------------------------------
@@ -75,9 +67,8 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/barang/create', [ConsumableController::class, 'create']);
-
-    Route::post('/barang/store', [ConsumableController::class, 'store']);
+    Route::get('/barang/create', [ConsumableController::class, 'create'])->name('barang.create');
+    Route::post('/barang/store', [ConsumableController::class, 'store'])->name('barang.store');
 
     /*
     |--------------------------------------------------------------------------
@@ -85,7 +76,7 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/barang/{id}', [ConsumableController::class, 'show']);
+    Route::get('/barang/{id}', [ConsumableController::class, 'show'])->name('barang.show');
 
     /*
     |--------------------------------------------------------------------------
@@ -93,7 +84,7 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/stock', [ConsumableController::class, 'stock']);
+    Route::get('/stock', [ConsumableController::class, 'stock'])->name('stock.index');
 
     /*
     |--------------------------------------------------------------------------
@@ -101,7 +92,7 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/history', [ConsumableController::class, 'history']);
+    Route::get('/history', [ConsumableController::class, 'history'])->name('history.index');
 
     /*
     |--------------------------------------------------------------------------
@@ -109,9 +100,8 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::post('/add-stock', [ConsumableController::class, 'addStock']);
-
-    Route::post('/take-stock', [ConsumableController::class, 'takeStock']);
+    Route::post('/add-stock', [ConsumableController::class, 'addStock'])->name('stock.add');
+    Route::post('/take-stock', [ConsumableController::class, 'takeStock'])->name('stock.take');
 
 });
 
@@ -121,7 +111,7 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
@@ -129,21 +119,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/requests', [StockRequestController::class, 'index']);
-
-    Route::post('/requests/{id}/approve', [
-
-        StockRequestController::class,
-        'approve'
-
-    ]);
-
-    Route::post('/requests/{id}/reject', [
-
-        StockRequestController::class,
-        'reject'
-
-    ]);
+    Route::get('/requests', [StockRequestController::class, 'index'])->name('requests');
+    Route::post('/requests/{id}/approve', [StockRequestController::class, 'approve'])->name('requests.approve');
+    Route::post('/requests/{id}/reject', [StockRequestController::class, 'reject'])->name('requests.reject');
 
     /*
     |--------------------------------------------------------------------------
@@ -151,26 +129,20 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    Route::get('/users', [
-
-        UserManagementController::class,
-        'index'
-
-    ]);
-
-    Route::post('/users/{id}/approve', [
-
-        UserManagementController::class,
-        'approve'
-
-    ]);
-
-    Route::post('/users/{id}/reject', [
-
-        UserManagementController::class,
-        'reject'
-
-    ]);
+    // List user dengan filter
+    Route::get('/users', [UserManagementController::class, 'index'])->name('users');
+    
+    // Approve user (setujui pendaftaran)
+    Route::post('/users/{id}/approve', [UserManagementController::class, 'approve'])->name('users.approve');
+    
+    // Reject user (tolak pendaftaran)
+    Route::post('/users/{id}/reject', [UserManagementController::class, 'reject'])->name('users.reject');
+    
+    // Update role user (ubah role admin/staff)
+    Route::post('/users/{id}/role', [UserManagementController::class, 'updateRole'])->name('users.role');
+    
+    // Create staff baru langsung dari admin
+    Route::post('/users/create-staff', [UserManagementController::class, 'createStaff'])->name('users.create-staff');
 
 });
 

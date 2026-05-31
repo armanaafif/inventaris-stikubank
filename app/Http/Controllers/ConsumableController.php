@@ -42,6 +42,36 @@ class ConsumableController extends Controller
 
         }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Filter Kondisi
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->condition) {
+
+            $query->where(
+                'condition',
+                $request->condition
+            );
+
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Filter Status
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->status) {
+
+            $query->where(
+                'status',
+                $request->status
+            );
+
+        }
+
         $data = $query
             ->latest()
             ->paginate(10)
@@ -83,13 +113,41 @@ class ConsumableController extends Controller
     {
         $request->validate([
 
+            /*
+            |--------------------------------------------------------------------------
+            | Informasi Barang
+            |--------------------------------------------------------------------------
+            */
+
             'name' => 'required|string|max:255',
+
+            /*
+            |--------------------------------------------------------------------------
+            | Relasi
+            |--------------------------------------------------------------------------
+            */
 
             'unit_measure_id' => 'required|exists:unit_measures,id',
 
+            /*
+            |--------------------------------------------------------------------------
+            | Stock
+            |--------------------------------------------------------------------------
+            */
+
             'minimum_stock' => 'required|integer|min:0',
 
-            'initial_stock' => 'required|integer|min:0'
+            'initial_stock' => 'required|integer|min:0',
+
+            /*
+            |--------------------------------------------------------------------------
+            | Kondisi & Status
+            |--------------------------------------------------------------------------
+            */
+
+            'condition' => 'required|in:BARU,BEKAS,LAYAK,RUSAK',
+
+            'status' => 'required|in:AKTIF,NONAKTIF'
 
         ]);
 
@@ -105,7 +163,17 @@ class ConsumableController extends Controller
 
             'unit_measure_id' => $request->unit_measure_id,
 
-            'minimum_stock' => $request->minimum_stock
+            'minimum_stock' => $request->minimum_stock,
+
+            /*
+            |--------------------------------------------------------------------------
+            | Kondisi & Status
+            |--------------------------------------------------------------------------
+            */
+
+            'condition' => $request->condition,
+
+            'status' => $request->status
 
         ]);
 
@@ -198,11 +266,17 @@ class ConsumableController extends Controller
 
     /**
      * --------------------------------------------------------------------------
-     * Histori Transaksi
+     * Histori Transaksi & Analisis Grafik
      * --------------------------------------------------------------------------
      */
     public function history(Request $request)
     {
+        /*
+        |--------------------------------------------------------------------------
+        | Query Transaksi untuk Tabel
+        |--------------------------------------------------------------------------
+        */
+
         $query = ConsumableTransaction::with([
             'consumable',
             'consumable.unitMeasure'
@@ -242,7 +316,7 @@ class ConsumableController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Data Transaksi
+        | Data Transaksi (Pagination)
         |--------------------------------------------------------------------------
         */
 
@@ -253,7 +327,7 @@ class ConsumableController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Statistik
+        | Statistik Overview (Card)
         |--------------------------------------------------------------------------
         */
 
@@ -265,11 +339,100 @@ class ConsumableController extends Controller
 
         $totalTransaksi = ConsumableTransaction::count();
 
+        $totalBarang = Consumable::count();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Data untuk Grafik (6 Bulan Terakhir)
+        |--------------------------------------------------------------------------
+        */
+
+        $months = collect(range(5, 0))->map(function($i) {
+            return now()->subMonths($i);
+        });
+
+        $chartLabels = [];
+        $barangMasukData = [];
+        $barangKeluarData = [];
+
+        foreach ($months as $month) {
+            $startDate = $month->copy()->startOfMonth();
+            $endDate = $month->copy()->endOfMonth();
+
+            $chartLabels[] = $month->format('M Y');
+
+            $barangMasukData[] = ConsumableTransaction::where('type', 'IN')
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->sum('quantity');
+
+            $barangKeluarData[] = ConsumableTransaction::where('type', 'OUT')
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->sum('quantity');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Top 5 Barang Paling Sering Dipakai
+        |--------------------------------------------------------------------------
+        */
+
+        $topUsedItems = Consumable::with('unitMeasure')
+            ->get()
+            ->map(function($item) {
+                $keluar = ConsumableTransaction::where('consumable_id', $item->id)
+                    ->where('type', 'OUT')
+                    ->sum('quantity');
+                $item->total_keluar = $keluar;
+                return $item;
+            })
+            ->sortByDesc('total_keluar')
+            ->take(5)
+            ->values();
+
+        $topUsedLabels = $topUsedItems->pluck('name')->toArray();
+        $topUsedData = $topUsedItems->pluck('total_keluar')->toArray();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Top 5 Barang Paling Sering Masuk
+        |--------------------------------------------------------------------------
+        */
+
+        $topInItems = Consumable::with('unitMeasure')
+            ->get()
+            ->map(function($item) {
+                $masuk = ConsumableTransaction::where('consumable_id', $item->id)
+                    ->where('type', 'IN')
+                    ->sum('quantity');
+                $item->total_masuk = $masuk;
+                return $item;
+            })
+            ->sortByDesc('total_masuk')
+            ->take(5)
+            ->values();
+
+        $topInLabels = $topInItems->pluck('name')->toArray();
+        $topInData = $topInItems->pluck('total_masuk')->toArray();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Return View
+        |--------------------------------------------------------------------------
+        */
+
         return view('history.index', compact(
             'transactions',
             'barangMasuk',
             'barangKeluar',
-            'totalTransaksi'
+            'totalTransaksi',
+            'totalBarang',
+            'chartLabels',
+            'barangMasukData',
+            'barangKeluarData',
+            'topUsedLabels',
+            'topUsedData',
+            'topInLabels',
+            'topInData'
         ));
     }
 

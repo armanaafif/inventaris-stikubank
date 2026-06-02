@@ -7,6 +7,8 @@ use App\Services\ConsumableService;
 use App\Models\Consumable;
 use App\Models\ConsumableTransaction;
 use App\Models\UnitMeasure;
+use App\Models\StockRequest;
+use App\Models\Borrowing; // <-- TAMBAHKAN IMPORT INI
 
 class ConsumableController extends Controller
 {
@@ -74,19 +76,37 @@ class ConsumableController extends Controller
             'status' => 'required|in:AKTIF,NONAKTIF'
         ]);
 
-        $item = Consumable::create([
-            'name' => $request->name,
-            'unit_measure_id' => $request->unit_measure_id,
-            'minimum_stock' => $request->minimum_stock,
-            'condition' => $request->condition,
-            'status' => $request->status
-        ]);
+        // Jika user adalah admin, langsung buat barang
+        if (auth()->user()->role === 'admin') {
+            $item = Consumable::create([
+                'name' => $request->name,
+                'unit_measure_id' => $request->unit_measure_id,
+                'minimum_stock' => $request->minimum_stock,
+                'condition' => $request->condition,
+                'status' => $request->status
+            ]);
 
-        if ($request->initial_stock > 0) {
-            $this->service->addStock($item->id, $request->initial_stock, 'Stok awal barang');
+            if ($request->initial_stock > 0) {
+                $this->service->addStock($item->id, $request->initial_stock, 'Stok awal barang');
+            }
+
+            return redirect('/barang')->with('success', 'Barang berhasil ditambahkan');
         }
 
-        return redirect('/barang')->with('success', 'Barang berhasil ditambahkan');
+        // Jika bukan admin, buat request approval
+        StockRequest::create([
+            'request_type' => 'CREATE_ITEM',
+            'user_id' => auth()->id(),
+            'item_name' => $request->name,
+            'unit_measure_id' => $request->unit_measure_id,
+            'minimum_stock' => $request->minimum_stock,
+            'initial_stock' => $request->initial_stock,
+            'condition' => $request->condition,
+            'item_status' => $request->status,
+            'status' => 'pending'
+        ]);
+
+        return redirect('/barang')->with('success', 'Request penambahan barang berhasil dikirim dan menunggu approval admin.');
     }
 
     /**
@@ -235,8 +255,23 @@ class ConsumableController extends Controller
             'note' => 'nullable|string'
         ]);
 
-        $this->service->addStock($request->consumable_id, $request->quantity, $request->note);
-        return redirect()->back()->with('success', 'Stock berhasil ditambahkan');
+        // Jika user adalah admin, proses langsung
+        if (auth()->user()->role === 'admin') {
+            $this->service->addStock($request->consumable_id, $request->quantity, $request->note);
+            return redirect()->back()->with('success', 'Stock berhasil ditambahkan');
+        }
+
+        // Jika bukan admin, buat request approval
+        StockRequest::create([
+            'consumable_id' => $request->consumable_id,
+            'quantity' => $request->quantity,
+            'type' => 'IN',
+            'note' => $request->note,
+            'status' => 'pending',
+            'user_id' => auth()->id()
+        ]);
+
+        return redirect()->back()->with('success', 'Request tambah stok berhasil dikirim dan menunggu approval admin.');
     }
 
     /**
@@ -252,12 +287,68 @@ class ConsumableController extends Controller
             'note' => 'nullable|string'
         ]);
 
-        try {
-            $this->service->takeStock($request->consumable_id, $request->quantity, $request->note);
-            return redirect()->back()->with('success', 'Barang berhasil digunakan');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', $e->getMessage());
+        // Jika user adalah admin, proses langsung
+        if (auth()->user()->role === 'admin') {
+            try {
+                $this->service->takeStock($request->consumable_id, $request->quantity, $request->note);
+                return redirect()->back()->with('success', 'Barang berhasil digunakan');
+            } catch (\Exception $e) {
+                return redirect()->back()->with('error', $e->getMessage());
+            }
         }
+
+        // Jika bukan admin, buat request approval
+        StockRequest::create([
+            'consumable_id' => $request->consumable_id,
+            'quantity' => $request->quantity,
+            'type' => 'OUT',
+            'note' => $request->note,
+            'status' => 'pending',
+            'user_id' => auth()->id()
+        ]);
+
+        return redirect()->back()->with('success', 'Request penggunaan barang berhasil dikirim dan menunggu approval admin.');
+    }
+
+    /**
+     * --------------------------------------------------------------------------
+     * Peminjaman Barang
+     * --------------------------------------------------------------------------
+     * Method untuk melakukan peminjaman barang
+     * Status awal: PENDING (menunggu approval admin)
+     */
+    public function borrowItem(Request $request)
+    {
+        // Validasi input dari form peminjaman
+        $request->validate([
+            'consumable_id' => 'required|exists:consumables,id',
+            'borrower_name' => 'required|string|max:255',
+            'quantity' => 'required|integer|min:1',
+            'return_date' => 'required|date|after:today',
+            'note' => 'nullable|string|max:500'
+        ]);
+
+        // Cek stok barang tersedia
+        $currentStock = $this->service->getStock($request->consumable_id);
+        
+        if ($currentStock < $request->quantity) {
+            return redirect()->back()->with('error', 'Stok tidak mencukupi! Stok tersedia: ' . number_format($currentStock));
+        }
+
+        // Simpan data peminjaman ke tabel borrowings
+        $borrowing = Borrowing::create([
+            'consumable_id' => $request->consumable_id,
+            'user_id' => auth()->id(), // ID user yang meminjam
+            'borrower_name' => $request->borrower_name,
+            'quantity' => $request->quantity,
+            'borrow_date' => now(), // Tanggal pinjam = sekarang
+            'return_date' => $request->return_date,
+            'note' => $request->note,
+            'status' => 'PENDING' // Status awal menunggu approval admin
+        ]);
+
+        // Jika berhasil disimpan, redirect dengan pesan sukses
+        return redirect()->back()->with('success', 'Peminjaman barang berhasil diajukan! Menunggu persetujuan admin.');
     }
 
     /**

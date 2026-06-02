@@ -43,4 +43,13 @@ class User extends Authenticatable
     {
         return $this->status === 'approved';
     }
+
+    /**
+     * Relasi ke model Borrowing
+     * Satu user bisa memiliki banyak peminjaman
+     */
+    public function borrowings()
+    {
+        return $this->hasMany(Borrowing::class);
+    }
 }

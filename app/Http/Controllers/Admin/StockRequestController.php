@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\StockRequest;
+use App\Models\Consumable;
 use App\Services\ConsumableService;
 use Illuminate\Http\Request;
 
@@ -84,6 +85,7 @@ class StockRequestController extends Controller
      * Approve request dan eksekusi perubahan stok
      * - Untuk tipe IN: menambah stok
      * - Untuk tipe OUT: mengurangi stok (dengan validasi stok mencukupi)
+     * - Untuk request_type CREATE_ITEM: membuat barang baru
      * 
      * @param int $id
      * @return \Illuminate\Http\RedirectResponse
@@ -96,6 +98,30 @@ class StockRequestController extends Controller
         // Cegah request yang sudah diproses diproses ulang
         if ($req->status !== 'pending') {
             return back()->with('error', 'Request sudah diproses');
+        }
+
+        // Handle CREATE_ITEM request type
+        if ($req->request_type === 'CREATE_ITEM') {
+            $item = Consumable::create([
+                'name' => $req->item_name,
+                'unit_measure_id' => $req->unit_measure_id,
+                'minimum_stock' => $req->minimum_stock,
+                'condition' => $req->condition,
+                'status' => $req->item_status
+            ]);
+
+            if ($req->initial_stock > 0) {
+                $this->service->addStock(
+                    $item->id,
+                    $req->initial_stock,
+                    'Stok awal barang'
+                );
+            }
+
+            $req->status = 'approved';
+            $req->save();
+
+            return back()->with('success', 'Request tambah barang berhasil di-approve');
         }
 
         // Validasi stok untuk tipe OUT

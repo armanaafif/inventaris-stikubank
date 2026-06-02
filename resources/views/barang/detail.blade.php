@@ -21,13 +21,11 @@
     </div>
     
     <div class="p-5">
-        <!-- Baris 1: Nama Barang -->
         <div class="mb-4 pb-3 border-b border-gray-100">
             <p class="text-xs text-gray-400 uppercase tracking-wide">Nama Barang</p>
             <p class="text-xl font-bold text-gray-800">{{ $item->name }}</p>
         </div>
         
-        <!-- Baris 2: Satuan, Minimum Stok, Kondisi, Status (Grid 4 kolom) -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <div>
                 <p class="text-xs text-gray-400 uppercase tracking-wide">Satuan</p>
@@ -58,7 +56,6 @@
             </div>
         </div>
         
-        <!-- Baris 3: Stok Saat Ini dengan Progress Bar -->
         <div class="pt-3 border-t border-gray-100">
             <div class="flex items-center justify-between mb-2">
                 <p class="text-xs text-gray-400 uppercase tracking-wide">Stok Saat Ini</p>
@@ -91,7 +88,6 @@
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
     
-    <!-- FORM TAMBAH STOK (KIRI) -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="border-b border-gray-100 bg-gradient-to-r from-green-50 to-white px-5 py-3">
             <div class="flex items-center gap-2">
@@ -139,7 +135,6 @@
         </form>
     </div>
 
-    <!-- FORM GUNAKAN BARANG (KANAN) -->
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div class="border-b border-gray-100 bg-gradient-to-r from-red-50 to-white px-5 py-3">
             <div class="flex items-center gap-2">
@@ -198,7 +193,100 @@
 
 <!--
 |--------------------------------------------------------------------------
-| TOMBOL KEMBALI (TANPA HAPUS)
+| FORM PINJAM BARANG (BARIS KETIGA) - SUDAH DIPERBAIKI
+|--------------------------------------------------------------------------
+-->
+
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+    <div class="border-b border-gray-100 bg-gradient-to-r from-purple-50 to-white px-5 py-3">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
+                <i class="fas fa-hand-holding text-purple-600"></i>
+            </div>
+            <div>
+                <h3 class="font-semibold text-gray-800">Pinjam Barang</h3>
+                <p class="text-xs text-gray-400">Mencatat peminjaman barang oleh pengguna</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- PERBAIKAN: route name sudah diganti dari borrowing.store menjadi borrow.item -->
+    <form method="POST" action="{{ route('borrow.item') }}" class="p-5">
+        @csrf
+        <input type="hidden" name="consumable_id" value="{{ $item->id }}">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+                <div class="mb-4">
+                    <label for="borrower_name" class="block text-sm font-medium text-gray-700 mb-1">
+                        Nama Peminjam <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" 
+                           id="borrower_name" 
+                           name="borrower_name" 
+                           required
+                           placeholder="Masukkan nama peminjam"
+                           class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
+                </div>
+                
+                <div class="mb-4">
+                    <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">
+                        Jumlah Pinjam <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" 
+                           id="quantity" 
+                           name="quantity" 
+                           required
+                           min="1"
+                           max="{{ $stock ?? 0 }}"
+                           placeholder="Masukkan jumlah barang yang dipinjam"
+                           class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
+                    @if(($stock ?? 0) <= 0)
+                        <p class="text-xs text-red-500 mt-1">Stok habis, tidak dapat melakukan peminjaman.</p>
+                    @else
+                        <p class="text-xs text-gray-400 mt-1">Maksimal peminjaman: {{ number_format($stock ?? 0) }}</p>
+                    @endif
+                </div>
+            </div>
+            
+            <div>
+                <div class="mb-4">
+                    <label for="return_date" class="block text-sm font-medium text-gray-700 mb-1">
+                        Tanggal Kembali <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" 
+                           id="return_date" 
+                           name="return_date" 
+                           required
+                           min="{{ date('Y-m-d', strtotime('+1 day')) }}"
+                           class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
+                    <p class="text-xs text-gray-400 mt-1">Minimal H+1 dari hari ini</p>
+                </div>
+                
+                <div class="mb-4">
+                    <label for="note" class="block text-sm font-medium text-gray-700 mb-1">
+                        Catatan Peminjaman
+                    </label>
+                    <textarea id="note" 
+                              name="note" 
+                              rows="2"
+                              placeholder="Contoh: Untuk keperluan rapat / event"
+                              class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"></textarea>
+                </div>
+            </div>
+        </div>
+        
+        <button type="submit" 
+                class="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 rounded-xl transition flex items-center justify-center gap-2 mt-2"
+                {{ ($stock ?? 0) <= 0 ? 'disabled' : '' }}>
+            <i class="fas fa-hand-holding"></i> Pinjam Barang
+        </button>
+    </form>
+</div>
+
+<!--
+|--------------------------------------------------------------------------
+| TOMBOL KEMBALI
 |--------------------------------------------------------------------------
 -->
 
@@ -231,7 +319,7 @@
                     <th class="px-5 py-3">Jumlah</th>
                     <th class="px-5 py-3">Catatan</th>
                     <th class="px-5 py-3">Tanggal</th>
-                </tr>
+                  </tr>
             </thead>
             <tbody class="divide-y divide-gray-100">
                 @forelse($transactions as $trx)
@@ -246,27 +334,27 @@
                                 <i class="fas fa-arrow-up text-xs"></i> Keluar
                             </span>
                         @endif
-                    </td>
+                      </td>
                     <td class="px-5 py-3 font-semibold {{ $trx->type == 'IN' ? 'text-green-600' : 'text-red-600' }}">
                         {{ number_format($trx->quantity) }}
-                    </td>
+                      </td>
                     <td class="px-5 py-3 text-gray-500 text-xs">
                         {{ $trx->note ?? '-' }}
-                    </td>
+                      </td>
                     <td class="px-5 py-3 text-gray-500 text-xs">
                         {{ $trx->created_at->format('d/m/Y H:i') }}
-                    </td>
-                </tr>
+                      </td>
+                  </tr>
                 @empty
-                <tr>
+                  <tr>
                     <td colspan="4" class="px-5 py-10 text-center text-gray-400">
                         <i class="fas fa-history text-3xl mb-2 block text-gray-300"></i>
                         Belum ada transaksi untuk barang ini
-                    </td>
-                </tr>
+                      </td>
+                  </tr>
                 @endforelse
             </tbody>
-        </table>
+          </table>
     </div>
 </div>
 

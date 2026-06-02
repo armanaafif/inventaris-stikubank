@@ -14,6 +14,7 @@ use App\Http\Controllers\ConsumableController;
 
 use App\Http\Controllers\Admin\StockRequestController;
 use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\Admin\BorrowingController; // <-- TAMBAHKAN INI
 
 /*
 |--------------------------------------------------------------------------
@@ -113,6 +114,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/add-stock', [ConsumableController::class, 'addStock'])->name('stock.add');
     Route::post('/take-stock', [ConsumableController::class, 'takeStock'])->name('stock.take');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Peminjaman Barang
+    |--------------------------------------------------------------------------
+    | Route untuk melakukan peminjaman barang
+    */
+
+    Route::post('/borrow-item', [ConsumableController::class, 'borrowItem'])->name('borrow.item');
+
 });
 
 /*
@@ -153,6 +163,24 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     
     // Create staff baru langsung dari admin
     Route::post('/users/create-staff', [UserManagementController::class, 'createStaff'])->name('users.create-staff');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Manajemen Peminjaman Barang (Admin)
+    |--------------------------------------------------------------------------
+    */
+
+    // Daftar semua peminjaman
+    Route::get('/borrowings', [BorrowingController::class, 'index'])->name('borrowings');
+    
+    // Approve peminjaman
+    Route::post('/borrowings/{id}/approve', [BorrowingController::class, 'approve'])->name('borrowings.approve');
+    
+    // Reject peminjaman
+    Route::post('/borrowings/{id}/reject', [BorrowingController::class, 'reject'])->name('borrowings.reject');
+    
+    // Konfirmasi pengembalian barang
+    Route::post('/borrowings/{id}/return', [BorrowingController::class, 'returnItem'])->name('borrowings.return');
 
 });
 

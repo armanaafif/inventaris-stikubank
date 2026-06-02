@@ -41,6 +41,7 @@
             
             <select name="type" class="rounded-lg border border-gray-300 px-4 py-2 text-sm w-36">
                 <option value="">Semua Tipe</option>
+                <option value="CREATE_ITEM" {{ request('type') == 'CREATE_ITEM' ? 'selected' : '' }}>Tambah Barang</option>
                 <option value="IN" {{ request('type') == 'IN' ? 'selected' : '' }}>Barang Masuk</option>
                 <option value="OUT" {{ request('type') == 'OUT' ? 'selected' : '' }}>Barang Keluar</option>
             </select>
@@ -67,8 +68,8 @@
             <table class="w-full">
                 <thead class="bg-gray-50 border-b">
                     <tr class="text-left text-xs font-medium text-gray-500">
-                        <th class="px-6 py-4">Barang</th>
-                        <th class="px-6 py-4">Jumlah</th>
+                        <th class="px-6 py-4">Barang / Request</th>
+                        <th class="px-6 py-4">Jumlah / Detail</th>
                         <th class="px-6 py-4">Tipe</th>
                         <th class="px-6 py-4">Diminta Oleh</th>
                         <th class="px-6 py-4">Catatan</th>
@@ -80,48 +81,87 @@
                     @forelse($requests as $req)
                     <tr class="text-sm hover:bg-gray-50 transition">
                         <td class="px-6 py-4">
-                            <p class="font-medium text-gray-800">{{ $req->consumable->name ?? '-' }}</p>
+                            @if($req->request_type == 'CREATE_ITEM')
+                                <p class="font-medium text-gray-800">{{ $req->item_name ?? '-' }}</p>
+                                <p class="text-xs text-gray-400 mt-0.5">
+                                    Satuan: {{ $req->unitMeasure->name ?? '-' }} | 
+                                    Min Stok: {{ number_format($req->minimum_stock ?? 0) }}
+                                </p>
+                            @else
+                                <p class="font-medium text-gray-800">{{ $req->consumable->name ?? '-' }}</p>
+                            @endif
                             <p class="text-xs text-gray-400 mt-0.5">Request #{{ $req->id }}</p>
                         </td>
                         <td class="px-6 py-4">
-                            <span class="font-semibold text-gray-800">{{ number_format($req->quantity) }}</span>
-                            <span class="text-xs text-gray-400 ml-1">{{ $req->consumable->unitMeasure->name ?? '' }}</span>
-                        </td>
-                        <td class="px-6 py-4">
-                            @if($req->type == 'IN')
-                                <span class="inline-flex px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">
-                                    <i class="fas fa-arrow-down mr-1 text-xs"></i> Masuk
-                                </span>
+                            @if($req->request_type == 'CREATE_ITEM')
+                                <div class="space-y-1">
+                                    <p class="text-gray-800">
+                                        <span class="font-semibold">Stok Awal:</span> 
+                                        {{ number_format($req->initial_stock ?? 0) }}
+                                    </p>
+                                    <p class="text-gray-800">
+                                        <span class="font-semibold">Kondisi:</span> 
+                                        <span class="inline-flex px-2 py-0.5 text-xs rounded-full 
+                                            @if($req->condition == 'BARU') bg-blue-100 text-blue-700
+                                            @elseif($req->condition == 'BEKAS') bg-gray-100 text-gray-700
+                                            @elseif($req->condition == 'LAYAK') bg-green-100 text-green-700
+                                            @else bg-red-100 text-red-700 @endif">
+                                            {{ $req->condition ?? '-' }}
+                                        </span>
+                                    </p>
+                                    <p class="text-gray-800">
+                                        <span class="font-semibold">Status:</span> 
+                                        <span class="inline-flex px-2 py-0.5 text-xs rounded-full 
+                                            @if($req->item_status == 'AKTIF') bg-green-100 text-green-700
+                                            @else bg-gray-100 text-gray-700 @endif">
+                                            {{ $req->item_status ?? '-' }}
+                                        </span>
+                                    </p>
+                                </div>
                             @else
-                                <span class="inline-flex px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">
-                                    <i class="fas fa-arrow-up mr-1 text-xs"></i> Keluar
-                                </span>
+                                <span class="font-semibold text-gray-800">{{ number_format($req->quantity) }}</span>
+                                <span class="text-xs text-gray-400 ml-1">{{ $req->consumable->unitMeasure->name ?? '' }}</span>
                             @endif
                         </td>
                         <td class="px-6 py-4">
+                            @if($req->request_type == 'CREATE_ITEM')
+                                <span class="inline-flex px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-700">
+                                    <i class="fas fa-plus-circle mr-1 text-xs"></i> Tambah Barang
+                                </span>
+                            @elseif($req->type == 'IN')
+                                <span class="inline-flex px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">
+                                    <i class="fas fa-arrow-down mr-1 text-xs"></i> Barang Masuk
+                                </span>
+                            @else
+                                <span class="inline-flex px-2 py-1 text-xs rounded-full bg-red-100 text-red-700">
+                                    <i class="fas fa-arrow-up mr-1 text-xs"></i> Barang Keluar
+                                </span>
+                            @endif
+                         </td>
+                        <td class="px-6 py-4">
                             <p class="text-gray-800">{{ $req->user->name ?? '-' }}</p>
                             <p class="text-xs text-gray-400 mt-0.5">{{ $req->user->email ?? '-' }}</p>
-                        </td>
+                         </td>
                         <td class="px-6 py-4 text-gray-500 text-xs max-w-xs truncate">
                             {{ $req->note ?? '-' }}
-                        </td>
+                         </td>
                         <td class="px-6 py-4 text-gray-500 text-xs">
                             {{ $req->created_at ? $req->created_at->format('d/m/Y H:i') : '-' }}
-                        </td>
+                         </td>
                         <td class="px-6 py-4 text-center">
                             @if($req->status === 'pending')
                                 <div class="flex items-center justify-center gap-2">
                                     <form method="POST" action="{{ route('admin.requests.approve', $req->id) }}" class="inline">
                                         @csrf
                                         <button type="submit" class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1.5 rounded-lg transition"
-                                            onclick="return confirm('Approve request barang {{ $req->consumable->name ?? '' }}?')">
+                                            onclick="return confirm('Approve request ini?')">
                                             <i class="fas fa-check mr-1"></i> Approve
                                         </button>
                                     </form>
                                     <form method="POST" action="{{ route('admin.requests.reject', $req->id) }}" class="inline">
                                         @csrf
                                         <button type="submit" class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded-lg transition"
-                                            onclick="return confirm('Reject request barang {{ $req->consumable->name ?? '' }}?')">
+                                            onclick="return confirm('Reject request ini?')">
                                             <i class="fas fa-times mr-1"></i> Reject
                                         </button>
                                     </form>
@@ -136,18 +176,18 @@
                                     @endif
                                 </span>
                             @endif
-                        </td>
-                    </tr>
+                         </td>
+                     </tr>
                     @empty
                     <tr>
                         <td colspan="7" class="px-6 py-12 text-center text-gray-400">
                             <i class="fas fa-clipboard-list text-3xl mb-2 block"></i>
                             Tidak ada data request
-                        </td>
+                         </td>
                     </tr>
                     @endforelse
                 </tbody>
-            </table>
+             </table>
         </div>
 
         <!-- Pagination -->
@@ -163,8 +203,8 @@
         <div class="flex items-center gap-3">
             <i class="fas fa-info-circle text-yellow-500"></i>
             <div class="text-sm text-yellow-800">
-                Request yang sudah <strong>Approved</strong> akan otomatis menambah/mengurangi stok barang. 
-                Request yang <strong>Rejected</strong> akan dihapus.
+                Request yang sudah <strong>Approved</strong> akan otomatis menambah/mengurangi stok barang atau membuat barang baru. 
+                Request yang <strong>Rejected</strong> akan ditolak tanpa perubahan.
             </div>
         </div>
     </div>

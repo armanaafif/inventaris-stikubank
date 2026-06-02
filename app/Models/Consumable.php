@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\UnitMeasure;
 use App\Models\ConsumableTransaction;
+use App\Models\Borrowing; // <-- TAMBAHKAN INI
 
 class Consumable extends Model
 {
@@ -70,5 +71,18 @@ class Consumable extends Model
         return $this->hasMany(
             ConsumableTransaction::class
         );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relasi Peminjaman Barang
+    |--------------------------------------------------------------------------
+    | Menghubungkan model Consumable dengan Borrowing
+    | Satu consumable bisa memiliki banyak peminjaman
+    */
+
+    public function borrowings()
+    {
+        return $this->hasMany(Borrowing::class);
     }
 }

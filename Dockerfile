@@ -28,10 +28,11 @@ COPY . .
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 RUN npm install
+
 RUN npm run build
 
-RUN chown -R www-data:www-data storage bootstrap/cache
+RUN chmod -R 775 storage bootstrap/cache
 
 EXPOSE 8080
 
-CMD php artisan serve --host=0.0.0.0 --port=8080
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]

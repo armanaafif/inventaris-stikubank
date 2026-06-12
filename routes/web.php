@@ -71,7 +71,9 @@ Route::middleware('auth')->group(function () {
     */
 
     Route::get('/barang/create', [ConsumableController::class, 'create'])->name('barang.create');
-    Route::post('/barang/store', [ConsumableController::class, 'store'])->name('barang.store');
+    Route::get('/barang/store', fn () => redirect()->route('barang.create'));
+    Route::post('/barang', [ConsumableController::class, 'store'])->name('barang.store');
+    Route::post('/barang/store', [ConsumableController::class, 'store']);
 
     /*
     |--------------------------------------------------------------------------

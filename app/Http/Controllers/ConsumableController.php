@@ -90,7 +90,7 @@ class ConsumableController extends Controller
                 $this->service->addStock($item->id, $request->initial_stock, 'Stok awal barang');
             }
 
-            return redirect('/barang')->with('success', 'Barang berhasil ditambahkan');
+            return redirect()->route('barang.index')->with('success', 'Barang berhasil ditambahkan');
         }
 
         // Jika bukan admin, buat request approval
@@ -106,7 +106,7 @@ class ConsumableController extends Controller
             'status' => 'pending'
         ]);
 
-        return redirect('/barang')->with('success', 'Request penambahan barang berhasil dikirim dan menunggu approval admin.');
+        return redirect()->route('barang.index')->with('success', 'Request penambahan barang berhasil dikirim dan menunggu approval admin.');
     }
 
     /**

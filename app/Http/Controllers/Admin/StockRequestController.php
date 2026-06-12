@@ -42,9 +42,13 @@ class StockRequestController extends Controller
         // Query dasar dengan relasi yang diperlukan
         $query = StockRequest::with(['consumable.unitMeasure', 'user']);
 
-        // Filter berdasarkan tipe (IN / OUT)
+        // Filter berdasarkan tipe request.
         if ($request->filled('type')) {
-            $query->where('type', $request->type);
+            if ($request->type === 'CREATE_ITEM') {
+                $query->where('request_type', 'CREATE_ITEM');
+            } else {
+                $query->where('type', $request->type);
+            }
         }
 
         // Filter berdasarkan status (pending / approved / rejected)
@@ -56,10 +60,12 @@ class StockRequestController extends Controller
             // $query->where('status', 'pending');
         }
 
-        // Search berdasarkan nama barang (consumable name)
+        // Search berdasarkan nama barang lama atau nama barang baru yang diminta.
         if ($request->filled('search')) {
-            $query->whereHas('consumable', function ($q) use ($request) {
-                $q->where('name', 'like', '%' . $request->search . '%');
+            $query->where(function ($q) use ($request) {
+                $q->whereHas('consumable', function ($consumableQuery) use ($request) {
+                    $consumableQuery->where('name', 'like', '%' . $request->search . '%');
+                })->orWhere('item_name', 'like', '%' . $request->search . '%');
             });
         }
 

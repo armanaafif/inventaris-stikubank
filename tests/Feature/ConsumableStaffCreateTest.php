@@ -44,3 +44,33 @@ test('staff can submit a create item request', function () {
 
     expect(StockRequest::first()->consumable_id)->toBeNull();
 });
+
+test('legacy barang store url still submits create item requests', function () {
+    $staff = User::factory()->create([
+        'role' => 'staff',
+        'status' => 'approved',
+    ]);
+
+    $unit = UnitMeasure::create([
+        'name' => 'BOX',
+    ]);
+
+    $response = $this
+        ->actingAs($staff)
+        ->post('/barang/store', [
+            'name' => 'Spidol Boardmarker',
+            'unit_measure_id' => $unit->id,
+            'minimum_stock' => 3,
+            'initial_stock' => 12,
+            'condition' => 'BARU',
+            'status' => 'AKTIF',
+        ]);
+
+    $response->assertRedirect('/barang');
+
+    $this->assertDatabaseHas('stock_requests', [
+        'request_type' => 'CREATE_ITEM',
+        'item_name' => 'Spidol Boardmarker',
+        'status' => 'pending',
+    ]);
+});

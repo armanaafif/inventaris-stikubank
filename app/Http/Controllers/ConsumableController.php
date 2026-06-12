@@ -106,7 +106,9 @@ class ConsumableController extends Controller
             'status' => 'pending'
         ]);
 
-        return redirect()->route('barang.index')->with('success', 'Request penambahan barang berhasil dikirim dan menunggu approval admin.');
+        return redirect()
+            ->route('barang.index')
+            ->with('approval_pending', 'Barang berhasil diajukan dan sedang menunggu approval admin.');
     }
 
     /**

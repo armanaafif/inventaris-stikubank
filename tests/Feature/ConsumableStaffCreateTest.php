@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\StockRequest;
 use App\Models\UnitMeasure;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -29,6 +28,7 @@ test('staff can submit a create item request', function () {
         ]);
 
     $response->assertRedirect('/barang');
+    $response->assertSessionHas('approval_pending', 'Barang berhasil diajukan dan sedang menunggu approval admin.');
 
     $this->assertDatabaseHas('stock_requests', [
         'request_type' => 'CREATE_ITEM',
@@ -42,7 +42,9 @@ test('staff can submit a create item request', function () {
         'status' => 'pending',
     ]);
 
-    expect(StockRequest::first()->consumable_id)->toBeNull();
+    $this->assertDatabaseMissing('consumables', [
+        'name' => 'Kabel HDMI',
+    ]);
 });
 
 test('legacy barang store url still submits create item requests', function () {
@@ -67,6 +69,7 @@ test('legacy barang store url still submits create item requests', function () {
         ]);
 
     $response->assertRedirect('/barang');
+    $response->assertSessionHas('approval_pending', 'Barang berhasil diajukan dan sedang menunggu approval admin.');
 
     $this->assertDatabaseHas('stock_requests', [
         'request_type' => 'CREATE_ITEM',

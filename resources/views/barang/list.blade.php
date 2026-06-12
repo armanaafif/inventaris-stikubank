@@ -272,6 +272,17 @@
 </script>
 @endif
 
+@if(session('approval_pending'))
+<script>
+    Swal.fire({
+        icon: 'info',
+        title: 'Menunggu Approval Admin',
+        text: '{{ session('approval_pending') }}',
+        confirmButtonColor: '#2563eb'
+    });
+</script>
+@endif
+
 @if(session('error'))
 <script>
     Swal.fire({

@@ -79,7 +79,7 @@
                         <th class="px-6 py-4">Status</th>
                         <th class="px-6 py-4">Bergabung</th>
                         <th class="px-6 py-4 text-center">Aksi</th>
-                    </table>
+                    </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse($users as $user)
@@ -132,7 +132,16 @@
                                     </form>
                                 </div>
                             @else
-                                <span class="text-xs text-gray-400">-</span>
+                                <div class="flex items-center justify-center gap-2">
+                                    <form method="POST" action="{{ route('admin.users.delete', $user->id) }}" class="inline" 
+                                          onsubmit="return confirm('Yakin ingin menghapus user {{ $user->name }}? Tindakan ini tidak dapat dibatalkan.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded-lg transition">
+                                            <i class="fas fa-trash mr-1"></i> Hapus
+                                        </button>
+                                    </form>
+                                </div>
                             @endif
                         </td>
                     </tr>

@@ -14,7 +14,7 @@ use App\Http\Controllers\ConsumableController;
 
 use App\Http\Controllers\Admin\StockRequestController;
 use App\Http\Controllers\Admin\UserManagementController;
-use App\Http\Controllers\Admin\BorrowingController; // <-- TAMBAHKAN INI
+use App\Http\Controllers\Admin\BorrowingController;
 
 /*
 |--------------------------------------------------------------------------
@@ -56,72 +56,23 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware('auth')->group(function () {
 
-    /*
-    |--------------------------------------------------------------------------
-    | Daftar Barang
-    |--------------------------------------------------------------------------
-    */
-
     Route::get('/barang', [ConsumableController::class, 'index'])->name('barang.index');
-
-    /*
-    |--------------------------------------------------------------------------
-    | Tambah Barang
-    |--------------------------------------------------------------------------
-    */
 
     Route::get('/barang/create', [ConsumableController::class, 'create'])->name('barang.create');
     Route::get('/barang/store', fn () => redirect()->route('barang.create'));
     Route::post('/barang', [ConsumableController::class, 'store'])->name('barang.store');
     Route::post('/barang/store', [ConsumableController::class, 'store']);
 
-    /*
-    |--------------------------------------------------------------------------
-    | Detail Barang
-    |--------------------------------------------------------------------------
-    */
-
     Route::get('/barang/{id}', [ConsumableController::class, 'show'])->name('barang.show');
-
-    /*
-    |--------------------------------------------------------------------------
-    | Hapus Barang
-    |--------------------------------------------------------------------------
-    */
 
     Route::delete('/barang/{id}', [ConsumableController::class, 'destroy'])->name('barang.destroy');
 
-    /*
-    |--------------------------------------------------------------------------
-    | Monitoring Stok
-    |--------------------------------------------------------------------------
-    */
-
     Route::get('/stock', [ConsumableController::class, 'stock'])->name('stock.index');
-
-    /*
-    |--------------------------------------------------------------------------
-    | Histori Transaksi
-    |--------------------------------------------------------------------------
-    */
 
     Route::get('/history', [ConsumableController::class, 'history'])->name('history.index');
 
-    /*
-    |--------------------------------------------------------------------------
-    | Manipulasi Stok
-    |--------------------------------------------------------------------------
-    */
-
     Route::post('/add-stock', [ConsumableController::class, 'addStock'])->name('stock.add');
     Route::post('/take-stock', [ConsumableController::class, 'takeStock'])->name('stock.take');
-
-    /*
-    |--------------------------------------------------------------------------
-    | Peminjaman Barang
-    |--------------------------------------------------------------------------
-    | Route untuk melakukan peminjaman barang
-    */
 
     Route::post('/borrow-item', [ConsumableController::class, 'borrowItem'])->name('borrow.item');
 
@@ -151,20 +102,18 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     |--------------------------------------------------------------------------
     */
 
-    // List user dengan filter
     Route::get('/users', [UserManagementController::class, 'index'])->name('users');
     
-    // Approve user (setujui pendaftaran)
     Route::post('/users/{id}/approve', [UserManagementController::class, 'approve'])->name('users.approve');
     
-    // Reject user (tolak pendaftaran)
     Route::post('/users/{id}/reject', [UserManagementController::class, 'reject'])->name('users.reject');
     
-    // Update role user (ubah role admin/staff)
     Route::post('/users/{id}/role', [UserManagementController::class, 'updateRole'])->name('users.role');
     
-    // Create staff baru langsung dari admin
     Route::post('/users/create-staff', [UserManagementController::class, 'createStaff'])->name('users.create-staff');
+
+    // Delete user account
+    Route::delete('/users/{id}/delete', [UserManagementController::class, 'destroy'])->name('users.delete');
 
     /*
     |--------------------------------------------------------------------------
@@ -172,24 +121,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     |--------------------------------------------------------------------------
     */
 
-    // Daftar semua peminjaman
     Route::get('/borrowings', [BorrowingController::class, 'index'])->name('borrowings');
     
-    // Approve peminjaman
     Route::post('/borrowings/{id}/approve', [BorrowingController::class, 'approve'])->name('borrowings.approve');
     
-    // Reject peminjaman
     Route::post('/borrowings/{id}/reject', [BorrowingController::class, 'reject'])->name('borrowings.reject');
     
-    // Konfirmasi pengembalian barang
     Route::post('/borrowings/{id}/return', [BorrowingController::class, 'returnItem'])->name('borrowings.return');
 
 });
-
-/*
-|--------------------------------------------------------------------------
-| AUTH
-|--------------------------------------------------------------------------
-*/
 
 require __DIR__.'/auth.php';

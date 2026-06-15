@@ -19,17 +19,14 @@ class UserManagementController extends Controller
     {
         $query = User::query();
 
-        // Filter berdasarkan status
         if ($request->status && $request->status != 'all') {
             $query->where('status', $request->status);
         }
 
-        // Filter berdasarkan role
         if ($request->role && $request->role != 'all') {
             $query->where('role', $request->role);
         }
 
-        // Search berdasarkan nama atau email
         if ($request->search) {
             $query->where(function($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->search . '%')
@@ -39,7 +36,6 @@ class UserManagementController extends Controller
 
         $users = $query->latest()->paginate(10)->withQueryString();
 
-        // Statistik
         $totalUser = User::count();
         $pendingUser = User::where('status', 'pending')->count();
         $approvedUser = User::where('status', 'approved')->count();
@@ -73,7 +69,7 @@ class UserManagementController extends Controller
             'status' => 'approved'
         ]);
 
-        return redirect()->back()->with('success', '✅ User ' . $user->name . ' berhasil diapprove');
+        return redirect()->back()->with('success', 'User ' . $user->name . ' berhasil diapprove');
     }
 
     /**
@@ -92,7 +88,7 @@ class UserManagementController extends Controller
         $userName = $user->name;
         $user->delete();
 
-        return redirect()->back()->with('success', '❌ Pendaftaran user ' . $userName . ' berhasil ditolak');
+        return redirect()->back()->with('success', 'Pendaftaran user ' . $userName . ' berhasil ditolak');
     }
 
     /**
@@ -121,7 +117,6 @@ class UserManagementController extends Controller
      */
     public function createStaff(Request $request)
     {
-        // Validasi input
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users,email',
@@ -140,7 +135,6 @@ class UserManagementController extends Controller
             'role.in' => 'Role yang dipilih tidak valid.',
         ]);
 
-        // Jika validasi gagal, kembali ke form dengan error
         if ($validator->fails()) {
             return redirect()->back()
                 ->withErrors($validator)
@@ -148,7 +142,6 @@ class UserManagementController extends Controller
                 ->with('showCreateModal', true);
         }
 
-        // Buat user baru
         try {
             $user = User::create([
                 'name' => $request->name,
@@ -161,7 +154,7 @@ class UserManagementController extends Controller
             $roleText = $user->role == 'admin' ? 'Admin' : 'Staff';
 
             return redirect()->route('admin.users')
-                ->with('success', '✅ ' . $roleText . ' baru berhasil ditambahkan! Email: ' . $user->email);
+                ->with('success', $roleText . ' baru berhasil ditambahkan. Email: ' . $user->email);
 
         } catch (\Exception $e) {
             return redirect()->back()
@@ -169,5 +162,25 @@ class UserManagementController extends Controller
                 ->with('error', 'Gagal menambahkan user: ' . $e->getMessage())
                 ->with('showCreateModal', true);
         }
+    }
+
+    /**
+     * --------------------------------------------------------------------------
+     * Hapus User (Staff/Admin)
+     * --------------------------------------------------------------------------
+     */
+    public function destroy($id)
+    {
+        $user = User::findOrFail($id);
+        
+        if ($user->id === auth()->id()) {
+            return redirect()->back()->with('error', 'Anda tidak dapat menghapus akun sendiri.');
+        }
+        
+        $userName = $user->name;
+        $user->delete();
+        
+        return redirect()->route('admin.users')
+            ->with('success', 'User "' . $userName . '" berhasil dihapus.');
     }
 }

@@ -110,8 +110,10 @@
                         <th class="px-6 py-4">Barang</th>
                         <th class="px-6 py-4">Peminjam</th>
                         <th class="px-6 py-4">Jumlah</th>
-                        <th class="px-6 py-4">Tanggal Pinjam</th>
-                        <th class="px-6 py-4">Tanggal Kembali</th>
+                        <th class="px-6 py-4">Tanggal Pengajuan</th>
+                        <th class="px-6 py-4">Tanggal Peminjaman</th>
+                        <th class="px-6 py-4">Tanggal Pengembalian</th>
+                        <th class="px-6 py-4">Tanggal Dikembalikan</th>
                         <th class="px-6 py-4">Keterlambatan</th>
                         <th class="px-6 py-4">Status</th>
                         <th class="px-6 py-4">Catatan</th>
@@ -121,6 +123,23 @@
 
                 <tbody class="divide-y divide-gray-100">
                     @forelse($borrowings as $borrowing)
+                    @php
+                        $submissionDate = $borrowing->created_at;
+                        $borrowDate = $borrowing->borrow_date ? \Carbon\Carbon::parse($borrowing->borrow_date) : null;
+                        $returnDate = $borrowing->return_date ? \Carbon\Carbon::parse($borrowing->return_date) : null;
+                        $returnedDate = $borrowing->actual_return_date
+                            ? \Carbon\Carbon::parse($borrowing->actual_return_date)
+                            : ($borrowing->returned_at ? \Carbon\Carbon::parse($borrowing->returned_at) : null);
+                        $lateDays = 0;
+
+                        if ($returnDate) {
+                            if ($returnedDate && $returnedDate->startOfDay()->gt($returnDate->copy()->startOfDay())) {
+                                $lateDays = $returnDate->copy()->startOfDay()->diffInDays($returnedDate->copy()->startOfDay());
+                            } elseif (!$returnedDate && $borrowing->status == 'BORROWED' && now()->startOfDay()->gt($returnDate->copy()->startOfDay())) {
+                                $lateDays = $returnDate->copy()->startOfDay()->diffInDays(now()->startOfDay());
+                            }
+                        }
+                    @endphp
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4">
                             <p class="font-medium text-gray-800">
@@ -145,19 +164,26 @@
                         </td>
 
                         <td class="px-6 py-4 text-sm text-gray-500">
-                            {{ \Carbon\Carbon::parse($borrowing->borrow_date)->format('d/m/Y') }}
+                            {{ $submissionDate ? $submissionDate->format('d/m/Y H:i') : '-' }}
                         </td>
 
                         <td class="px-6 py-4 text-sm text-gray-500">
-                            {{ \Carbon\Carbon::parse($borrowing->return_date)->format('d/m/Y') }}
+                            {{ $borrowDate ? $borrowDate->format('d/m/Y') : '-' }}
+                        </td>
+
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                            {{ $returnDate ? $returnDate->format('d/m/Y') : '-' }}
+                        </td>
+
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                            {{ $returnedDate ? $returnedDate->format('d/m/Y') : '-' }}
                         </td>
 
                         <!-- Kolom Keterlambatan -->
                         <td class="px-6 py-4 text-sm">
-                            @if($borrowing->status == 'BORROWED' && \Carbon\Carbon::parse($borrowing->return_date)->isPast())
+                            @if($lateDays > 0)
                                 <span class="font-semibold text-red-600">
-                                    {{ \Carbon\Carbon::now()->diffInDays(\Carbon\Carbon::parse($borrowing->return_date)) }}
-                                    hari
+                                    {{ $lateDays }} hari
                                 </span>
                             @else
                                 -
@@ -170,7 +196,7 @@
                                     Pending
                                 </span>
                             @elseif($borrowing->status == 'BORROWED')
-                                @if(\Carbon\Carbon::parse($borrowing->return_date)->isPast())
+                                @if($lateDays > 0)
                                     <span class="px-2 py-1 rounded-full text-xs bg-red-100 text-red-700">
                                         Terlambat
                                     </span>
@@ -196,22 +222,28 @@
 
                         <td class="px-6 py-4">
                             @if($borrowing->status == 'PENDING')
-                                <div class="flex gap-2">
-                                    <!-- Form Approve -->
-                                    <form method="POST" action="{{ route('admin.borrowings.approve', $borrowing->id) }}">
+                                <div class="flex flex-col gap-2 min-w-[220px]">
+                                    <form method="POST" action="{{ route('admin.borrowings.approve', $borrowing->id) }}" class="space-y-2">
                                         @csrf
+                                        <select name="consumable_stock_id" required class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                                            <option value="">Pilih lokasi asal</option>
+                                            @foreach(($borrowing->consumable->stocks ?? collect())->where('quantity', '>', 0) as $stockLocation)
+                                                <option value="{{ $stockLocation->id }}">
+                                                    {{ $stockLocation->location->name ?? '-' }} ({{ number_format($stockLocation->quantity) }})
+                                                </option>
+                                            @endforeach
+                                        </select>
                                         <button type="submit"
                                                 onclick="return confirm('Approve peminjaman ini?')"
-                                                class="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-2 rounded-lg">
-                                            Approve
+                                                class="w-full bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-2.5 rounded-lg">
+                                            <i class="fas fa-check mr-1"></i> Approve
                                         </button>
                                     </form>
 
-                                    <!-- Tombol Reject (memanggil modal) -->
                                     <button type="button"
                                             onclick="showRejectModal({{ $borrowing->id }})"
-                                            class="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-2 rounded-lg">
-                                        Reject
+                                            class="w-full bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-2.5 rounded-lg">
+                                        <i class="fas fa-times mr-1"></i> Reject
                                     </button>
                                 </div>
                             @elseif($borrowing->status == 'BORROWED')
@@ -219,7 +251,7 @@
                                     @csrf
                                     <button type="submit"
                                             onclick="return confirm('Barang sudah dikembalikan?')"
-                                            class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-2 rounded-lg">
+                                            class="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2.5 rounded-lg">
                                         <i class="fas fa-undo mr-1"></i>
                                         Konfirmasi Kembali
                                     </button>
@@ -231,7 +263,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="text-center py-12 text-gray-400">
+                        <td colspan="11" class="text-center py-12 text-gray-400">
                             <i class="fas fa-box-open text-3xl mb-3 block"></i>
                             Belum ada data peminjaman
                         </td>

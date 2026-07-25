@@ -24,6 +24,8 @@ class BorrowingController extends Controller
         // Query dasar dengan relasi
         $query = Borrowing::with([
             'consumable.unitMeasure',
+            'consumable.stocks.location',
+            'consumableStock.location',
             'user'
         ]);
 
@@ -79,7 +81,7 @@ class BorrowingController extends Controller
         ));
     }
 
-    public function approve($id)
+    public function approve(Request $request, $id)
     {
         $borrowing = Borrowing::findOrFail($id);
 
@@ -87,6 +89,26 @@ class BorrowingController extends Controller
             return back()->with(
                 'error',
                 'Peminjaman sudah diproses'
+            );
+        }
+
+        $request->validate([
+            'consumable_stock_id' => 'required|exists:consumable_stocks,id',
+        ]);
+
+        $stockLocation = $borrowing->consumable
+            ->stocks()
+            ->where('id', $request->consumable_stock_id)
+            ->first();
+
+        if (!$stockLocation) {
+            return back()->with('error', 'Lokasi stok tidak valid');
+        }
+
+        if ($stockLocation->quantity < $borrowing->quantity) {
+            return back()->with(
+                'error',
+                'Stok di lokasi tersebut tidak mencukupi'
             );
         }
 
@@ -104,10 +126,12 @@ class BorrowingController extends Controller
         $this->service->takeStock(
             $borrowing->consumable_id,
             $borrowing->quantity,
-            'Peminjaman disetujui oleh admin'
+            'Peminjaman disetujui oleh admin',
+            $stockLocation->location_id
         );
 
         $borrowing->update([
+            'consumable_stock_id' => $stockLocation->id,
             'status' => 'BORROWED',
             'approved_by' => auth()->id(),
             'approved_at' => now()
@@ -157,11 +181,13 @@ class BorrowingController extends Controller
         $this->service->addStock(
             $borrowing->consumable_id,
             $borrowing->quantity,
-            'Pengembalian barang oleh: ' . $borrowing->borrower_name
+            'Pengembalian barang oleh: ' . $borrowing->borrower_name,
+            $borrowing->consumableStock->location_id ?? null
         );
 
         $borrowing->update([
             'status' => 'RETURNED',
+            'actual_return_date' => now()->toDateString(),
             'returned_at' => now()
         ]);
 

@@ -6,13 +6,15 @@
 
 @section('content')
 
-<!-- BARIS PERTAMA: 4 CARD STATISTIK STOK -->
+@php($fmt = \App\Support\InventoryFormatter::class)
+
+<!-- BARIS PERTAMA: 4 CARD STATISTIK -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-5">
     
     <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm text-gray-400">Total Barang</p>
+                <p class="text-sm text-gray-400">Jenis Barang</p>
                 <p class="text-2xl font-bold text-gray-800 mt-1">{{ $totalBarang ?? 0 }}</p>
             </div>
             <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -24,11 +26,11 @@
     <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm text-gray-400">Total Stok</p>
-                <p class="text-2xl font-bold text-gray-800 mt-1">{{ number_format($totalStock ?? 0) }}</p>
+                <p class="text-sm text-gray-400">Total Lokasi</p>
+                <p class="text-2xl font-bold text-gray-800 mt-1">{{ number_format($totalLokasi ?? 0) }}</p>
             </div>
-            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <i class="fas fa-chart-line text-green-600 text-xl"></i>
+            <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                <i class="fas fa-map-marker-alt text-indigo-600 text-xl"></i>
             </div>
         </div>
     </div>
@@ -36,8 +38,8 @@
     <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm text-gray-400">Barang Masuk</p>
-                <p class="text-2xl font-bold text-gray-800 mt-1">{{ number_format($barangMasuk ?? 0) }}</p>
+                <p class="text-sm text-gray-400">Barang Masuk Hari Ini</p>
+                <p class="text-2xl font-bold text-gray-800 mt-1">{{ $fmt::quantity($barangMasukHariIni ?? 0) }}</p>
             </div>
             <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
                 <i class="fas fa-arrow-down text-emerald-600 text-xl"></i>
@@ -48,13 +50,36 @@
     <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm text-gray-400">Barang Keluar</p>
-                <p class="text-2xl font-bold text-gray-800 mt-1">{{ number_format($barangKeluar ?? 0) }}</p>
+                <p class="text-sm text-gray-400">Barang Keluar Hari Ini</p>
+                <p class="text-2xl font-bold text-gray-800 mt-1">{{ $fmt::quantity($barangKeluarHariIni ?? 0) }}</p>
             </div>
             <div class="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center">
                 <i class="fas fa-arrow-up text-rose-600 text-xl"></i>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- RINGKASAN INVENTARIS -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-8">
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h3 class="font-semibold text-gray-800">Ringkasan Inventaris</h3>
+            <p class="text-xs text-gray-400 mt-1">Total stok dikelompokkan berdasarkan satuan</p>
+        </div>
+        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+            <i class="fas fa-layer-group text-blue-600"></i>
+        </div>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-3">
+        @forelse(($ringkasanInventaris ?? collect()) as $unit => $amount)
+            <div class="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                <p class="text-xs text-gray-400">{{ $unit }}</p>
+                <p class="mt-1 text-xl font-bold text-gray-800">{{ $fmt::quantity($amount) }}</p>
+            </div>
+        @empty
+            <p class="text-sm text-gray-400">Belum ada stok inventaris.</p>
+        @endforelse
     </div>
 </div>
 
@@ -252,7 +277,7 @@
                             {{ $transaction->type == 'IN' ? 'Masuk' : 'Keluar' }}
                         </span>
                     </td>
-                    <td class="px-6 py-3 text-gray-800">{{ number_format($transaction->quantity) }}</td>
+                    <td class="px-6 py-3 text-gray-800">{{ $fmt::quantity($transaction->quantity) }}</td>
                     <td class="px-6 py-3 text-gray-400 text-xs">{{ $transaction->created_at->format('d/m/Y H:i') }}</td>
                 </tr>
                 @empty

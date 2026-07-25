@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ConsumableController;
+use App\Http\Controllers\LocationController;
 
 use App\Http\Controllers\Admin\StockRequestController;
 use App\Http\Controllers\Admin\UserManagementController;
@@ -63,6 +64,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/barang', [ConsumableController::class, 'store'])->name('barang.store');
     Route::post('/barang/store', [ConsumableController::class, 'store']);
 
+    Route::get('/barang/{id}/edit', [ConsumableController::class, 'edit'])->name('barang.edit');
+    Route::put('/barang/{id}', [ConsumableController::class, 'update'])->name('barang.update');
     Route::get('/barang/{id}', [ConsumableController::class, 'show'])->name('barang.show');
 
     Route::delete('/barang/{id}', [ConsumableController::class, 'destroy'])->name('barang.destroy');
@@ -73,8 +76,13 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/add-stock', [ConsumableController::class, 'addStock'])->name('stock.add');
     Route::post('/take-stock', [ConsumableController::class, 'takeStock'])->name('stock.take');
+    Route::post('/stock/transfer', [ConsumableController::class, 'transferStock'])->name('stock.transfer');
 
     Route::post('/borrow-item', [ConsumableController::class, 'borrowItem'])->name('borrow.item');
+
+    Route::post('/locations/quick-store', [LocationController::class, 'store'])->name('locations.quick-store');
+    Route::post('/categories/quick-store', [ConsumableController::class, 'storeCategory'])->name('categories.quick-store');
+    Route::get('/categories/{category}/next-item-number', [ConsumableController::class, 'nextItemNumber'])->name('categories.next-item-number');
 
 });
 

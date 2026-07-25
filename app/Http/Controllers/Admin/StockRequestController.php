@@ -31,6 +31,19 @@ class StockRequestController extends Controller
         $this->service = $service;
     }
 
+    private function continuousBatchPayload($source, $unitName = null): array
+    {
+        return [
+            'brand' => $source->brand,
+            'model' => $source->model,
+            'serial_number' => $source->serial_number,
+            'specification' => $source->specification,
+            'condition' => $source->condition,
+            'quantity' => $source->quantity,
+            'length_unit' => $source->length_unit ?: $unitName,
+        ];
+    }
+
     /**
      * Menampilkan daftar request dengan filter, search, dan statistik
      * 
@@ -40,12 +53,19 @@ class StockRequestController extends Controller
     public function index(Request $request)
     {
         // Query dasar dengan relasi yang diperlukan
-        $query = StockRequest::with(['consumable.unitMeasure', 'user']);
+        $query = StockRequest::with([
+            'consumable.unitMeasure',
+            'user',
+            'location',
+            'category',
+            'fromLocation',
+            'toLocation'
+        ]);
 
         // Filter berdasarkan tipe request.
         if ($request->filled('type')) {
-            if ($request->type === 'CREATE_ITEM') {
-                $query->where('request_type', 'CREATE_ITEM');
+            if ($request->type === 'CREATE_ITEM' || $request->type === 'TRANSFER') {
+                $query->where('request_type', $request->type);
             } else {
                 $query->where('type', $request->type);
             }
@@ -108,19 +128,53 @@ class StockRequestController extends Controller
 
         // Handle CREATE_ITEM request type
         if ($req->request_type === 'CREATE_ITEM') {
+            $categoryId = $req->category_id ?: $this->service->defaultCategoryId();
+            $itemCode = $req->item_code ?: $this->service->generateItemCode($categoryId, $req->item_number);
+
+            if (Consumable::where('item_code', $itemCode)->exists()) {
+                return back()->with('error', 'Nomor barang sudah digunakan.');
+            }
+
             $item = Consumable::create([
+                'item_code' => $itemCode,
+                'item_number' => $req->item_number ?: $this->service->nextItemNumber($categoryId),
+                'category_id' => $categoryId,
                 'name' => $req->item_name,
+                'inventory_type' => $req->inventory_type ?: 'UNIT',
+                'brand' => $req->brand,
+                'model' => $req->model,
+                'serial_number' => $req->serial_number,
+                'specification' => $req->specification,
+                'description' => $req->description,
                 'unit_measure_id' => $req->unit_measure_id,
                 'minimum_stock' => $req->minimum_stock,
                 'condition' => $req->condition,
-                'status' => $req->item_status
+                'status' => $req->item_status,
+                'purchase_receipt_path' => $req->purchase_receipt_path
             ]);
 
-            if ($req->initial_stock > 0) {
+            if ($item->inventory_type === 'CONTINUOUS') {
+                $item->load('unitMeasure');
+                $this->service->addStock(
+                    $item->id,
+                    0,
+                    'Stok awal barang',
+                    $req->location_id ?: $this->service->defaultLocationId(),
+                    $this->continuousBatchPayload($req, $item->unitMeasure?->name)
+                );
+            } elseif ($req->initial_stock > 0) {
                 $this->service->addStock(
                     $item->id,
                     $req->initial_stock,
-                    'Stok awal barang'
+                    'Stok awal barang',
+                    $req->location_id ?: $this->service->defaultLocationId(),
+                    [
+                        'brand' => $req->brand,
+                        'model' => $req->model,
+                        'serial_number' => $req->serial_number,
+                        'specification' => $req->specification,
+                        'condition' => $req->condition,
+                    ]
                 );
             }
 
@@ -139,18 +193,47 @@ class StockRequestController extends Controller
         }
 
         // Eksekusi perubahan stok berdasarkan tipe
-        if ($req->type === 'IN') {
-            $this->service->addStock(
-                $req->consumable_id,
-                $req->quantity,
-                $req->note . ' [Approved by ' . auth()->user()->name . ']'
+        if ($req->request_type === 'TRANSFER') {
+            try {
+                $this->service->transferStock(
+                    $req->consumable_id,
+                    $req->from_location_id,
+                    $req->to_location_id,
+                    $req->quantity,
+                    $req->note . ' [Approved by ' . auth()->user()->name . ']',
+                    auth()->id()
+                );
+            } catch (\Exception $e) {
+                return back()->with('error', $e->getMessage());
+            }
+        } elseif ($req->type === 'IN') {
+                $item = Consumable::with('unitMeasure')->find($req->consumable_id);
+                $this->service->addStock(
+                    $req->consumable_id,
+                    $req->quantity,
+                    $req->note . ' [Approved by ' . auth()->user()->name . ']',
+                    $req->location_id,
+                    $item?->inventory_type === 'CONTINUOUS'
+                        ? $this->continuousBatchPayload($req, $item->unitMeasure?->name)
+                        : [
+                            'brand' => $req->brand,
+                            'model' => $req->model,
+                            'serial_number' => $req->serial_number,
+                            'specification' => $req->specification,
+                            'condition' => $req->condition,
+                        ]
             );
         } elseif ($req->type === 'OUT') {
-            $this->service->takeStock(
-                $req->consumable_id,
-                $req->quantity,
-                $req->note . ' [Approved by ' . auth()->user()->name . ']'
-            );
+            try {
+                $this->service->takeStock(
+                    $req->consumable_id,
+                    $req->quantity,
+                    $req->note . ' [Approved by ' . auth()->user()->name . ']',
+                    $req->location_id
+                );
+            } catch (\Exception $e) {
+                return back()->with('error', $e->getMessage());
+            }
         }
 
         // Update status request menjadi approved

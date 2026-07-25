@@ -42,6 +42,7 @@
             <select name="type" class="rounded-lg border border-gray-300 px-4 py-2 text-sm w-36">
                 <option value="">Semua Tipe</option>
                 <option value="CREATE_ITEM" {{ request('type') == 'CREATE_ITEM' ? 'selected' : '' }}>Tambah Barang</option>
+                <option value="TRANSFER" {{ request('type') == 'TRANSFER' ? 'selected' : '' }}>Transfer</option>
                 <option value="IN" {{ request('type') == 'IN' ? 'selected' : '' }}>Barang Masuk</option>
                 <option value="OUT" {{ request('type') == 'OUT' ? 'selected' : '' }}>Barang Keluar</option>
             </select>
@@ -84,8 +85,16 @@
                             @if($req->request_type == 'CREATE_ITEM')
                                 <p class="font-medium text-gray-800">{{ $req->item_name ?? '-' }}</p>
                                 <p class="text-xs text-gray-400 mt-0.5">
+                                    Kategori: {{ $req->category->name ?? '-' }} |
                                     Satuan: {{ $req->unitMeasure->name ?? '-' }} | 
-                                    Min Stok: {{ number_format($req->minimum_stock ?? 0) }}
+                                    Lokasi: {{ $req->location->name ?? '-' }} |
+                                    Min Stok: {{ is_null($req->minimum_stock) ? '-' : number_format($req->minimum_stock) }}
+                                </p>
+                                <p class="text-xs text-gray-400 mt-0.5">Kode dibuat otomatis saat approve</p>
+                            @elseif($req->request_type == 'TRANSFER')
+                                <p class="font-medium text-gray-800">{{ $req->consumable->name ?? '-' }}</p>
+                                <p class="text-xs text-gray-400 mt-0.5">
+                                    Dari: {{ $req->fromLocation->name ?? '-' }} → Tujuan: {{ $req->toLocation->name ?? '-' }}
                                 </p>
                             @else
                                 <p class="font-medium text-gray-800">{{ $req->consumable->name ?? '-' }}</p>
@@ -117,6 +126,14 @@
                                             {{ $req->item_status ?? '-' }}
                                         </span>
                                     </p>
+                                    <p class="text-gray-800">
+                                        <span class="font-semibold">Nota:</span>
+                                        @if($req->purchase_receipt_path)
+                                            <a href="{{ asset('storage/' . $req->purchase_receipt_path) }}" target="_blank" class="text-blue-600 hover:text-blue-800">Lihat</a>
+                                        @else
+                                            -
+                                        @endif
+                                    </p>
                                 </div>
                             @else
                                 <span class="font-semibold text-gray-800">{{ number_format($req->quantity) }}</span>
@@ -127,6 +144,10 @@
                             @if($req->request_type == 'CREATE_ITEM')
                                 <span class="inline-flex px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-700">
                                     <i class="fas fa-plus-circle mr-1 text-xs"></i> Tambah Barang
+                                </span>
+                            @elseif($req->request_type == 'TRANSFER')
+                                <span class="inline-flex px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">
+                                    <i class="fas fa-exchange-alt mr-1 text-xs"></i> Transfer
                                 </span>
                             @elseif($req->type == 'IN')
                                 <span class="inline-flex px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">

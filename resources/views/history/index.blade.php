@@ -52,6 +52,7 @@
                 <option value="">Semua Transaksi</option>
                 <option value="IN" {{ request('type') == 'IN' ? 'selected' : '' }}>Barang Masuk</option>
                 <option value="OUT" {{ request('type') == 'OUT' ? 'selected' : '' }}>Barang Keluar</option>
+                <option value="TRANSFER" {{ request('type') == 'TRANSFER' ? 'selected' : '' }}>Transfer</option>
             </select>
 
             <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm">
@@ -85,9 +86,11 @@
                         </td>
                         <td class="px-6 py-4">
                             <span class="inline-flex px-2 py-1 text-xs rounded-full 
-                                {{ $trx->type == 'IN' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                                {{ $trx->type == 'IN' ? 'bg-green-100 text-green-700' : ($trx->type == 'TRANSFER' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700') }}">
                                 @if($trx->type == 'IN')
                                     <i class="fas fa-arrow-down mr-1 text-xs"></i> Masuk
+                                @elseif($trx->type == 'TRANSFER')
+                                    <i class="fas fa-exchange-alt mr-1 text-xs"></i> Transfer
                                 @else
                                     <i class="fas fa-arrow-up mr-1 text-xs"></i> Keluar
                                 @endif
@@ -98,8 +101,13 @@
                                 {{ number_format($trx->quantity) }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 text-gray-500 text-xs max-w-xs truncate">
-                            {{ $trx->note ?? '-' }}
+                        <td class="px-6 py-4 text-gray-500 text-xs max-w-xs">
+                            @if($trx->type == 'TRANSFER')
+                                {{ $trx->note ?? '-' }}<br>
+                                <span class="text-blue-600">{{ $trx->fromLocation->name ?? '-' }} → {{ $trx->toLocation->name ?? '-' }}</span>
+                            @else
+                                {{ $trx->note ?? '-' }}
+                            @endif
                         </td>
                         <td class="px-6 py-4 text-gray-500 text-xs">
                             {{ $trx->created_at->format('d/m/Y H:i') }}

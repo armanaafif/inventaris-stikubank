@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Consumable;
+use App\Models\ConsumableStock;
 use App\Models\ConsumableTransaction;
 use App\Models\StockRequest;
-use App\Models\Borrowing; // Untuk mengambil data peminjaman
-use Illuminate\Support\Facades\DB;
+use App\Models\Borrowing;
 
 class DashboardController extends Controller
 {
@@ -29,13 +29,19 @@ class DashboardController extends Controller
         // Menghitung jumlah total barang yang terdaftar di database
         $totalBarang = Consumable::count();
 
-        // Menghitung total stok keseluruhan
-        // Rumus: semua stok masuk dikurangi semua stok keluar
-        $totalStock = ConsumableTransaction::selectRaw("
-            COALESCE(SUM(CASE WHEN type = 'IN' THEN quantity ELSE 0 END),0) -
-            COALESCE(SUM(CASE WHEN type = 'OUT' THEN quantity ELSE 0 END),0)
-            as total
-        ")->value('total');
+        $totalStock = ConsumableStock::sum('quantity');
+        $totalLokasi = \App\Models\Location::where('is_active', true)->count();
+        $barangMasukHariIni = ConsumableTransaction::where('type', 'IN')
+            ->whereDate('created_at', today())
+            ->sum('quantity');
+        $barangKeluarHariIni = ConsumableTransaction::where('type', 'OUT')
+            ->whereDate('created_at', today())
+            ->sum('quantity');
+        $ringkasanInventaris = Consumable::with(['unitMeasure', 'stocks'])
+            ->get()
+            ->groupBy(fn ($item) => $item->unitMeasure->name ?? '-')
+            ->map(fn ($items) => $items->sum(fn ($item) => $item->stocks->sum('quantity')))
+            ->sortKeys();
 
         // Menghitung berapa banyak request penambahan barang yang masih pending
         $pendingRequest = StockRequest::where('status', 'pending')->count();
@@ -45,19 +51,13 @@ class DashboardController extends Controller
         // ============================================================
         
         $barangMenipis = 0;
-        $items = Consumable::all();
+        $items = Consumable::with('stocks')->get();
 
         // Loop setiap barang, hitung stoknya, bandingkan dengan minimum stok
         foreach ($items as $item) {
-            $stock = ConsumableTransaction::where('consumable_id', $item->id)
-                ->selectRaw("
-                    COALESCE(SUM(CASE WHEN type = 'IN' THEN quantity ELSE 0 END),0) -
-                    COALESCE(SUM(CASE WHEN type = 'OUT' THEN quantity ELSE 0 END),0)
-                    as total
-                ")->value('total');
+            $stock = $item->stocks->sum('quantity');
 
-            // Jika stok saat ini kurang atau sama dengan batas minimum, tandai
-            if ($stock <= $item->minimum_stock) {
+            if (!is_null($item->minimum_stock) && $stock <= $item->minimum_stock) {
                 $barangMenipis++;
             }
         }
@@ -182,6 +182,10 @@ class DashboardController extends Controller
             // Statistik dasar
             'totalBarang',
             'totalStock',
+            'totalLokasi',
+            'barangMasukHariIni',
+            'barangKeluarHariIni',
+            'ringkasanInventaris',
             'pendingRequest',
             'barangMenipis',
             

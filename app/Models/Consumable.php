@@ -5,7 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\UnitMeasure;
 use App\Models\ConsumableTransaction;
-use App\Models\Borrowing; // <-- TAMBAHKAN INI
+use App\Models\Borrowing;
+use App\Models\ConsumableStock;
 
 class Consumable extends Model
 {
@@ -18,6 +19,15 @@ class Consumable extends Model
         */
 
         'name',
+        'inventory_type',
+        'item_code',
+        'item_number',
+        'category_id',
+        'brand',
+        'model',
+        'serial_number',
+        'specification',
+        'description',
 
         /*
         |--------------------------------------------------------------------------
@@ -42,7 +52,8 @@ class Consumable extends Model
         */
 
         'condition',
-        'status'
+        'status',
+        'purchase_receipt_path'
 
     ];
 
@@ -60,6 +71,14 @@ class Consumable extends Model
         );
     }
 
+    public function category()
+    {
+        return $this->belongsTo(
+            Category::class,
+            'category_id'
+        );
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Relasi Transaksi Barang
@@ -71,6 +90,11 @@ class Consumable extends Model
         return $this->hasMany(
             ConsumableTransaction::class
         );
+    }
+
+    public function stocks()
+    {
+        return $this->hasMany(ConsumableStock::class);
     }
 
     /*

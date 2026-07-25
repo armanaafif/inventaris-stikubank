@@ -19,7 +19,7 @@
     <!-- ========== PERINGATAN DARURAT DI ATAS ========== -->
     @php
         $menipisItems = $data->filter(function($item) { 
-            return ($item->stock ?? 0) <= $item->minimum_stock && ($item->stock ?? 0) > 0; 
+            return !is_null($item->minimum_stock) && ($item->stock ?? 0) <= $item->minimum_stock && ($item->stock ?? 0) > 0; 
         });
         $habisItems = $data->filter(function($item) { 
             return ($item->stock ?? 0) <= 0; 
@@ -102,7 +102,7 @@
         </div>
         <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
             <p class="text-xs text-gray-400">Stok Aman</p>
-            <p class="text-2xl font-bold text-green-600">{{ $data->filter(function($item) { return ($item->stock ?? 0) > $item->minimum_stock; })->count() }}</p>
+            <p class="text-2xl font-bold text-green-600">{{ $data->filter(function($item) { return is_null($item->minimum_stock) || ($item->stock ?? 0) > $item->minimum_stock; })->count() }}</p>
         </div>
         <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
             <p class="text-xs text-gray-400">Stok Menipis</p>
@@ -141,6 +141,7 @@
                     <tr class="text-left text-xs font-medium text-gray-500">
                         <th class="px-6 py-4">Nama Barang</th>
                         <th class="px-6 py-4">Satuan</th>
+                        <th class="px-6 py-4">Lokasi Utama</th>
                         <th class="px-6 py-4">Stok Saat Ini</th>
                         <th class="px-6 py-4">Min Stok</th>
                         <th class="px-6 py-4">Status</th>
@@ -151,9 +152,9 @@
                     @php
                         $filteredData = $data;
                         if (request('stock_status') == 'aman') {
-                            $filteredData = $filteredData->filter(function($item) { return ($item->stock ?? 0) > $item->minimum_stock; });
+                            $filteredData = $filteredData->filter(function($item) { return is_null($item->minimum_stock) || ($item->stock ?? 0) > $item->minimum_stock; });
                         } elseif (request('stock_status') == 'menipis') {
-                            $filteredData = $filteredData->filter(function($item) { return ($item->stock ?? 0) <= $item->minimum_stock && ($item->stock ?? 0) > 0; });
+                            $filteredData = $filteredData->filter(function($item) { return !is_null($item->minimum_stock) && ($item->stock ?? 0) <= $item->minimum_stock && ($item->stock ?? 0) > 0; });
                         } elseif (request('stock_status') == 'habis') {
                             $filteredData = $filteredData->filter(function($item) { return ($item->stock ?? 0) <= 0; });
                         }
@@ -163,19 +164,36 @@
                     @php
                         $stock = $item->stock ?? 0;
                         $minStock = $item->minimum_stock;
-                        $status = $stock <= 0 ? 'habis' : ($stock <= $minStock ? 'menipis' : 'aman');
+                        $status = $stock <= 0 ? 'habis' : (!is_null($minStock) && $stock <= $minStock ? 'menipis' : 'aman');
+                        $activeLocations = $item->stocks->filter(function($stockLocation) use ($item) {
+                            return $item->inventory_type === 'CONTINUOUS'
+                                ? $stockLocation->remaining_length > 0
+                                : $stockLocation->quantity > 0;
+                        })->values();
+                        $primaryLocation = $activeLocations->first();
+                        $otherLocationCount = max(0, $activeLocations->count() - 1);
                     @endphp
                     <tr class="text-sm hover:bg-gray-50 transition">
                         <td class="px-6 py-4">
                             <p class="font-medium text-gray-800">{{ $item->name }}</p>
                         </td>
                         <td class="px-6 py-4 text-gray-600">{{ $item->unitMeasure->name ?? '-' }}</td>
+                        <td class="px-6 py-4 text-gray-600">
+                            @if($primaryLocation)
+                                <p>{{ $primaryLocation->location->name ?? '-' }}</p>
+                                @if($otherLocationCount > 0)
+                                    <p class="text-xs text-gray-400">+{{ $otherLocationCount }} lokasi</p>
+                                @endif
+                            @else
+                                -
+                            @endif
+                        </td>
                         <td class="px-6 py-4">
                             <span class="font-semibold {{ $status == 'habis' ? 'text-red-600' : ($status == 'menipis' ? 'text-yellow-600' : 'text-gray-800') }}">
-                                {{ number_format($stock) }}
+                                {{ $item->stock_display ?? number_format($stock) }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 text-gray-600">{{ number_format($minStock) }}</td>
+                        <td class="px-6 py-4 text-gray-600">{{ is_null($minStock) ? '-' : number_format($minStock) }}</td>
                         <td class="px-6 py-4">
                             <span class="inline-flex px-2 py-1 text-xs rounded-full 
                                 {{ $status == 'aman' ? 'bg-green-100 text-green-700' : 
@@ -190,14 +208,45 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 text-center">
-                            <a href="{{ route('barang.show', $item->id) }}" class="text-blue-600 hover:text-blue-800" title="Detail">
-                                <i class="fas fa-eye"></i>
-                            </a>
+                            <div class="flex items-center justify-center gap-2">
+                                <button type="button" onclick="toggleStockDistribution({{ $item->id }})" class="inline-flex items-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100">
+                                    [ Detail ]
+                                </button>
+                                <a href="{{ route('barang.show', $item->id) }}" class="inline-flex items-center rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700 hover:bg-blue-100">
+                                    [ Lihat ]
+                                </a>
+                            </div>
                         </td>
                      </tr>
+                    <tr id="stockDistribution{{ $item->id }}" class="hidden bg-gray-50">
+                        <td colspan="7" class="px-6 py-4">
+                            <div class="max-w-md rounded-xl border border-gray-200 bg-white overflow-hidden">
+                                <table class="w-full text-sm">
+                                    <tbody class="divide-y divide-gray-100">
+                                        @forelse($item->stocks as $stockLocation)
+                                            <tr>
+                                                <td class="px-4 py-2 text-gray-700">{{ $stockLocation->location->name ?? '-' }}</td>
+                                                <td class="px-4 py-2 text-right font-semibold">
+                                                    @if($item->inventory_type === 'CONTINUOUS')
+                                                        {{ number_format($stockLocation->remaining_length, 2) }} {{ $stockLocation->length_unit ?: ($item->unitMeasure->name ?? '') }}
+                                                    @else
+                                                        {{ number_format($stockLocation->quantity) }}
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td class="px-4 py-3 text-center text-gray-400" colspan="2">Belum ada distribusi lokasi</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="px-6 py-12 text-center text-gray-400">
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-400">
                             <i class="fas fa-box-open text-3xl mb-2 block"></i>
                             Tidak ada data barang
                         </td>
@@ -209,4 +258,9 @@
     </div>
 
 </div>
+<script>
+    function toggleStockDistribution(itemId) {
+        document.getElementById('stockDistribution' + itemId).classList.toggle('hidden');
+    }
+</script>
 @endsection
